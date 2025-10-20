@@ -1,13 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const API_KEY = process.env.GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(API_KEY);
 
 // Helper to get MIME type from file extension
 function getMimeType(filePath) {
@@ -32,6 +28,15 @@ function fileToGenerativePart(filePath, mimeType) {
 }
 
 export const generateVirtualTryOn = async (modelUrl, clothingItems) => {
+  const API_KEY = process.env.GEMINI_API_KEY;
+
+  if (!API_KEY) {
+    throw new Error('GEMINI_API_KEY is not set in environment variables');
+  }
+
+  // Lazy import to avoid loading SDK before env vars are set
+  const { GoogleGenerativeAI } = await import('@google/generative-ai');
+  const genAI = new GoogleGenerativeAI(API_KEY);
   const uploadsDir = path.join(__dirname, '../../../frontend/public');
 
   try {
@@ -105,7 +110,7 @@ export const generateVirtualTryOn = async (modelUrl, clothingItems) => {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-preview-image-generation' });
 
     const result = await model.generateContent([textPrompt, ...imageParts]);
-    const response = await result.response;
+    const response = result.response;
 
     console.log('📥 Received response from Gemini');
 
@@ -137,6 +142,12 @@ export const generateVirtualTryOn = async (modelUrl, clothingItems) => {
 
 // Generate a descriptive label for clothing items using AI
 export const generateClothingLabel = async (imageUrl) => {
+  const API_KEY = process.env.GEMINI_API_KEY;
+
+  if (!API_KEY) {
+    throw new Error('GEMINI_API_KEY is not set in environment variables');
+  }
+
   const uploadsDir = path.join(__dirname, '../../../frontend/public');
   const IMAGE_GEN_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 

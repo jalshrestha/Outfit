@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { UploadModel } from "@/components/upload-model"
 import { GenerateButton } from "@/components/generate-button"
 import { generateTryOn, getImageUrl } from "@/lib/api"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, ArrowLeft, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { ClothingItem } from "@/types"
 
@@ -32,6 +32,35 @@ export function RightPanel({
   currentModelIndex = 0
 }: RightPanelProps) {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  const imageRef = useRef<HTMLDivElement>(null)
+
+  // Touch/swipe handlers
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+
+    if (isLeftSwipe && onNextModel) {
+      onNextModel()
+    }
+    if (isRightSwipe && onPrevModel) {
+      onPrevModel()
+    }
+  }
 
   const handleGenerate = async () => {
     try {
@@ -78,51 +107,92 @@ export function RightPanel({
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card">
       <div className="flex-shrink-0 border-b border-border p-4">
-        <h2 className="font-serif text-2xl font-bold text-foreground">Virtual Try-On</h2>
-        <p className="mt-1 text-xs text-muted-foreground">See how your outfit looks together</p>
-      </div>
-
-      <div className="flex-shrink-0 border-b border-border p-4">
-        <div className="space-y-3">
-          <UploadModel onModelImageChange={onModelImageChange} />
-
-          {modelCount > 1 && (
-            <div className="flex items-center justify-between gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onPrevModel}
-                disabled={!onPrevModel}
-                className="flex-1"
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
-              </Button>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-serif text-2xl font-bold text-foreground">Virtual Try-On</h2>
+            <p className="mt-1 text-xs text-muted-foreground">See how your outfit looks together</p>
+          </div>
+          <div className="flex-shrink-0">
+            <UploadModel onModelImageChange={onModelImageChange} />
+          </div>
+        </div>
+        {modelCount > 1 && (
+          <div className="mt-3 flex items-center justify-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onPrevModel}
+              disabled={!onPrevModel}
+              className="h-10 w-10 rounded-full p-0 hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1">
+                {Array.from({ length: modelCount }).map((_, index) => (
+                  <div
+                    key={index}
+                    className={`h-2 w-2 rounded-full transition-all duration-200 ${
+                      index === currentModelIndex 
+                        ? 'bg-primary scale-125' 
+                        : 'bg-muted-foreground/30'
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-muted-foreground ml-2">
                 {currentModelIndex + 1} / {modelCount}
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onNextModel}
-                disabled={!onNextModel}
-                className="flex-1"
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
             </div>
-          )}
-        </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onNextModel}
+              disabled={!onNextModel}
+              className="h-10 w-10 rounded-full p-0 hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+            >
+              <ArrowRight className="h-5 w-5" />
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-hidden p-4">
-        <div className="relative h-full overflow-hidden rounded-lg border border-border bg-white shadow-lg">
-          <img
-            src={generatedImage || modelImage || "/placeholder.svg"}
-            alt="Model"
-            className="h-full w-full object-contain"
-          />
+        <div 
+          ref={imageRef}
+          className="relative h-full overflow-hidden rounded-lg border border-border bg-gradient-to-br from-gray-50 to-gray-100 shadow-lg"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <img
+              src={generatedImage || modelImage || "/placeholder.svg"}
+              alt="Model"
+              className="max-h-full max-w-full object-contain transition-all duration-300 ease-in-out"
+              style={{ 
+                maxHeight: '100%', 
+                maxWidth: '100%',
+                objectFit: 'contain'
+              }}
+            />
+          </div>
+          
+          {/* Swipe indicators */}
+          {modelCount > 1 && (
+            <>
+              <div className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity duration-200">
+                <div className="bg-black/20 backdrop-blur-sm rounded-full p-2">
+                  <ArrowLeft className="h-4 w-4 text-white" />
+                </div>
+              </div>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity duration-200">
+                <div className="bg-black/20 backdrop-blur-sm rounded-full p-2">
+                  <ArrowRight className="h-4 w-4 text-white" />
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
