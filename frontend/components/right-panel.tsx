@@ -4,7 +4,7 @@ import { useState, useRef } from "react"
 import { UploadModel } from "@/components/upload-model"
 import { GenerateButton } from "@/components/generate-button"
 import { generateTryOn, getImageUrl } from "@/lib/api"
-import { ArrowLeft, ArrowRight, Download } from "lucide-react"
+import { ArrowLeft, ArrowRight, Download, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { ClothingItem } from "@/types"
 
@@ -18,6 +18,7 @@ interface RightPanelProps {
   onModelImageChange: (image: string) => void
   onNextModel?: () => void
   onPrevModel?: () => void
+  onDeleteModel?: () => void
   modelCount?: number
   currentModelIndex?: number
 }
@@ -28,6 +29,7 @@ export function RightPanel({
   onModelImageChange,
   onNextModel,
   onPrevModel,
+  onDeleteModel,
   modelCount = 1,
   currentModelIndex = 0
 }: RightPanelProps) {
@@ -200,6 +202,19 @@ export function RightPanel({
               title="Download generated image"
             >
               <Download className="h-5 w-5" />
+            </Button>
+          )}
+
+          {/* Delete model button - only show when there's a model image and no generated image */}
+          {modelImage && !generatedImage && onDeleteModel && (
+            <Button
+              variant="destructive"
+              size="icon"
+              className="absolute right-2 top-2 h-10 w-10 shadow-lg z-10"
+              onClick={onDeleteModel}
+              title="Delete model image"
+            >
+              <X className="h-5 w-5" />
             </Button>
           )}
           

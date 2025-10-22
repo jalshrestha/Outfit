@@ -80,6 +80,22 @@ export function MainLayout() {
     setCurrentModelIndex((prev) => (prev - 1 + modelImages.length) % modelImages.length)
   }
 
+  const handleDeleteModel = () => {
+    if (modelImages.length === 0) return
+
+    // Remove the current model from the array
+    const updated = modelImages.filter((_, index) => index !== currentModelIndex)
+    setModelImages(updated)
+    localStorage.setItem("modelImages", JSON.stringify(updated))
+
+    // Adjust current index
+    if (updated.length === 0) {
+      setCurrentModelIndex(0)
+    } else if (currentModelIndex >= updated.length) {
+      setCurrentModelIndex(updated.length - 1)
+    }
+  }
+
   return (
     <main className="h-[calc(100vh-80px)] overflow-hidden">
       <div className="grid h-full gap-4 p-4" style={{ gridTemplateColumns: "60% 40%" }}>
@@ -96,6 +112,7 @@ export function MainLayout() {
           onModelImageChange={handleModelImageChange}
           onNextModel={handleNextModel}
           onPrevModel={handlePrevModel}
+          onDeleteModel={handleDeleteModel}
           modelCount={modelImages.length}
           currentModelIndex={currentModelIndex}
         />
