@@ -5,7 +5,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const API_KEY = process.env.GEMINI_API_KEY;
 const API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 // Helper to get MIME type
@@ -21,6 +20,12 @@ function getMimeType(filePath) {
 }
 
 export const getCategoryFromGemini = async (localPath) => {
+  const API_KEY = process.env.GEMINI_API_KEY;
+
+  if (!API_KEY) {
+    throw new Error('GEMINI_API_KEY is not set in environment variables');
+  }
+
   // Resolve path relative to backend directory
   const fullPath = path.join(__dirname, '../../../frontend/public', localPath);
 
@@ -67,9 +72,28 @@ export const getCategoryFromGemini = async (localPath) => {
   }
 
   const data = await response.json();
-  const responseText = data.candidates[0].content.parts[0].text;
-  const jsonResponse = JSON.parse(responseText.replace(/```json|```/g, '').trim());
+  const responseText = data.candidates[0].content.parts[0].text.trim();
 
-  console.log('✅ Category:', jsonResponse.category);
-  return jsonResponse.category;
+  console.log('📝 Raw Gemini response:', responseText);
+
+  // Try to parse as JSON first
+  let category;
+  try {
+    // Remove markdown code blocks if present
+    const cleanedText = responseText.replace(/```json|```/g, '').trim();
+    const jsonResponse = JSON.parse(cleanedText);
+    category = jsonResponse.category;
+  } catch (e) {
+    // If not JSON, check if it's a plain string with a valid category
+    const validCategories = ['upper_body', 'lower_body', 'shoes'];
+    const cleanCategory = responseText.replace(/["']/g, '').trim();
+    if (validCategories.includes(cleanCategory)) {
+      category = cleanCategory;
+    } else {
+      throw new Error(`Invalid category response: ${responseText}`);
+    }
+  }
+
+  console.log('✅ Category:', category);
+  return category;
 };

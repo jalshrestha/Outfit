@@ -26,12 +26,15 @@ export function LeftPanel({ clothingItems, onAddClothing, onSelectItem, onDelete
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card">
       <div className="flex-shrink-0 border-b border-border p-4">
-        <h2 className="font-serif text-2xl font-bold text-foreground">Your Wardrobe</h2>
-        <p className="mt-1 text-xs text-muted-foreground">Upload and organize your clothing items</p>
-      </div>
-
-      <div className="flex-shrink-0 border-b border-border p-4">
-        <UploadGarment onAddClothing={onAddClothing} />
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-serif text-2xl font-bold text-foreground">Your Wardrobe</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Upload and organize your clothing items</p>
+          </div>
+          <div className="flex-shrink-0">
+            <UploadGarment onAddClothing={onAddClothing} />
+          </div>
+        </div>
       </div>
 
       <div className="flex-shrink-0 border-b border-border p-4">
@@ -39,7 +42,7 @@ export function LeftPanel({ clothingItems, onAddClothing, onSelectItem, onDelete
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        <ClothingGrid items={filteredItems} onSelectItem={onSelectItem} onDeleteItem={onDeleteItem} selectedItems={selectedItems} />
+        <ClothingGrid items={filteredItems} onSelectItem={onSelectItem} onDeleteItem={onDeleteItem} selectedItems={selectedItems} currentFilter={filter} />
       </div>
     </div>
   )
