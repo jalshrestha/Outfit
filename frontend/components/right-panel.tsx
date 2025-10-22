@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { UploadModel } from "@/components/upload-model"
 import { GenerateButton } from "@/components/generate-button"
 import { generateTryOn, getImageUrl } from "@/lib/api"
-import { ChevronLeft, ChevronRight, ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowLeft, ArrowRight, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { ClothingItem } from "@/types"
 
@@ -104,6 +104,18 @@ export function RightPanel({
     }
   }
 
+  const handleDownload = () => {
+    if (!generatedImage) return
+
+    // Create a temporary anchor element to trigger download
+    const link = document.createElement('a')
+    link.href = generatedImage
+    link.download = `virtual-tryon-${Date.now()}.png`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card">
       <div className="flex-shrink-0 border-b border-border p-4">
@@ -170,13 +182,26 @@ export function RightPanel({
               src={generatedImage || modelImage || "/placeholder.svg"}
               alt="Model"
               className="max-h-full max-w-full object-contain transition-all duration-300 ease-in-out"
-              style={{ 
-                maxHeight: '100%', 
+              style={{
+                maxHeight: '100%',
                 maxWidth: '100%',
                 objectFit: 'contain'
               }}
             />
           </div>
+
+          {/* Download button - only show when there's a generated image */}
+          {generatedImage && (
+            <Button
+              variant="secondary"
+              size="icon"
+              className="absolute right-2 top-2 h-10 w-10 shadow-lg z-10"
+              onClick={handleDownload}
+              title="Download generated image"
+            >
+              <Download className="h-5 w-5" />
+            </Button>
+          )}
           
           {/* Swipe indicators */}
           {modelCount > 1 && (
