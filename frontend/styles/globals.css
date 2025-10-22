@@ -40,38 +40,39 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  /* Modern dark theme with sophisticated color palette */
+  --background: oklch(0.08 0.01 240); /* Deep navy-blue background */
+  --foreground: oklch(0.95 0.01 240); /* Crisp white text */
+  --card: oklch(0.12 0.02 240); /* Slightly lighter navy for cards */
+  --card-foreground: oklch(0.95 0.01 240);
+  --popover: oklch(0.12 0.02 240);
+  --popover-foreground: oklch(0.95 0.01 240);
+  --primary: oklch(0.85 0.15 240); /* Bright blue accent */
+  --primary-foreground: oklch(0.08 0.01 240);
+  --secondary: oklch(0.18 0.03 240); /* Medium navy for secondary elements */
+  --secondary-foreground: oklch(0.95 0.01 240);
+  --muted: oklch(0.20 0.02 240); /* Muted navy */
+  --muted-foreground: oklch(0.70 0.01 240); /* Softer text */
+  --accent: oklch(0.22 0.05 240); /* Accent navy */
+  --accent-foreground: oklch(0.95 0.01 240);
+  --destructive: oklch(0.65 0.20 15); /* Warm red for destructive actions */
+  --destructive-foreground: oklch(0.95 0.01 240);
+  --border: oklch(0.25 0.02 240); /* Subtle borders */
+  --input: oklch(0.18 0.03 240); /* Input backgrounds */
+  --ring: oklch(0.85 0.15 240); /* Focus ring */
+  --chart-1: oklch(0.70 0.15 240);
+  --chart-2: oklch(0.65 0.20 180);
+  --chart-3: oklch(0.75 0.18 300);
+  --chart-4: oklch(0.68 0.16 60);
+  --chart-5: oklch(0.72 0.14 120);
+  --sidebar: oklch(0.12 0.02 240);
+  --sidebar-foreground: oklch(0.95 0.01 240);
+  --sidebar-primary: oklch(0.85 0.15 240);
+  --sidebar-primary-foreground: oklch(0.08 0.01 240);
+  --sidebar-accent: oklch(0.18 0.03 240);
+  --sidebar-accent-foreground: oklch(0.95 0.01 240);
+  --sidebar-border: oklch(0.25 0.02 240);
+  --sidebar-ring: oklch(0.85 0.15 240);
 }
 
 @theme inline {
@@ -122,4 +123,95 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Smooth transitions for interactions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, transform, box-shadow;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Enhanced dark mode styling */
+.dark {
+  /* Add subtle glow effects for better depth */
+  --shadow-elevation-low: 0 1px 2px 0 oklch(0 0 0 / 0.3);
+  --shadow-elevation-medium: 0 4px 6px -1px oklch(0 0 0 / 0.4), 0 2px 4px -1px oklch(0 0 0 / 0.2);
+  --shadow-elevation-high: 0 10px 15px -3px oklch(0 0 0 / 0.5), 0 4px 6px -2px oklch(0 0 0 / 0.3);
+}
+
+/* Light mode shadows */
+:root {
+  --shadow-elevation-low: 0 1px 2px 0 oklch(0 0 0 / 0.05);
+  --shadow-elevation-medium: 0 4px 6px -1px oklch(0 0 0 / 0.1), 0 2px 4px -1px oklch(0 0 0 / 0.06);
+  --shadow-elevation-high: 0 10px 15px -3px oklch(0 0 0 / 0.1), 0 4px 6px -2px oklch(0 0 0 / 0.05);
+}
+
+/* Enhanced card styling for dark mode */
+.dark .bg-card {
+  box-shadow: var(--shadow-elevation-medium);
+  border: 1px solid oklch(0.25 0.02 240);
+}
+
+/* Improved button hover states */
+.dark .hover\:bg-muted:hover {
+  background-color: oklch(0.22 0.03 240);
+}
+
+/* Better focus states */
+.dark .focus\:ring-2:focus {
+  --tw-ring-color: oklch(0.85 0.15 240);
+}
+
+/* Ensure header positioning is correct */
+header {
+  position: relative;
+  z-index: 50;
+}
+
+header .container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  height: 4rem !important;
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Force theme toggle to the right */
+header .flex.items-center.gap-3:last-child {
+  margin-left: auto !important;
+  flex-shrink: 0 !important;
+}
+
+/* Additional positioning fixes */
+header .container > div:first-child {
+  flex-shrink: 0;
+}
+
+header .container > div:last-child {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Specific theme toggle positioning */
+header button[title*="Switch to"] {
+  position: relative;
+  z-index: 10;
+}
+
+/* Ultra-specific positioning for theme toggle */
+header .container .flex.items-center.gap-3:last-child {
+  position: absolute !important;
+  right: 1.5rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin-left: 0 !important;
+}
+
+/* Ensure the header container has relative positioning */
+header .container {
+  position: relative !important;
 }

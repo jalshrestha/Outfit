@@ -106,16 +106,31 @@ export function RightPanel({
     }
   }
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!generatedImage) return
 
-    // Create a temporary anchor element to trigger download
-    const link = document.createElement('a')
-    link.href = generatedImage
-    link.download = `virtual-tryon-${Date.now()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    try {
+      // Fetch the image as a blob to avoid CORS issues
+      const response = await fetch(generatedImage)
+      const blob = await response.blob()
+
+      // Create a blob URL
+      const blobUrl = window.URL.createObjectURL(blob)
+
+      // Create a temporary anchor element to trigger download
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = `virtual-tryon-${Date.now()}.png`
+      document.body.appendChild(link)
+      link.click()
+
+      // Clean up
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(blobUrl)
+    } catch (error) {
+      console.error('Error downloading image:', error)
+      alert('Failed to download image. Please try again.')
+    }
   }
 
   return (
@@ -174,7 +189,7 @@ export function RightPanel({
       <div className="flex-1 overflow-hidden p-4">
         <div 
           ref={imageRef}
-          className="relative h-full overflow-hidden rounded-lg border border-border bg-gradient-to-br from-gray-50 to-gray-100 shadow-lg"
+          className="relative h-full overflow-hidden rounded-lg border border-border bg-gradient-to-br from-muted/30 to-muted/50 dark:from-muted/20 dark:to-muted/30 shadow-lg backdrop-blur-sm"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -222,13 +237,13 @@ export function RightPanel({
           {modelCount > 1 && (
             <>
               <div className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity duration-200">
-                <div className="bg-black/20 backdrop-blur-sm rounded-full p-2">
-                  <ArrowLeft className="h-4 w-4 text-white" />
+                <div className="bg-background/80 backdrop-blur-sm rounded-full p-2 border border-border/50 shadow-lg">
+                  <ArrowLeft className="h-4 w-4 text-foreground" />
                 </div>
               </div>
               <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity duration-200">
-                <div className="bg-black/20 backdrop-blur-sm rounded-full p-2">
-                  <ArrowRight className="h-4 w-4 text-white" />
+                <div className="bg-background/80 backdrop-blur-sm rounded-full p-2 border border-border/50 shadow-lg">
+                  <ArrowRight className="h-4 w-4 text-foreground" />
                 </div>
               </div>
             </>
