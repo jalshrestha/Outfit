@@ -182,7 +182,7 @@ export function OutfitHistory({ onRefresh }: OutfitHistoryProps) {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card">
+    <div className="flex h-full flex-col rounded-lg border border-border bg-card">
       {/* Header */}
       <div className="flex-shrink-0 border-b border-border p-4">
         <div className="flex items-center justify-between">
@@ -248,7 +248,8 @@ export function OutfitHistory({ onRefresh }: OutfitHistoryProps) {
       </div>
 
       {/* Outfit Grid/List */}
-      <ScrollArea className="flex-1 p-4">
+      <div className="flex-1 overflow-hidden p-4">
+        <ScrollArea className="h-full">
         {filteredOutfits.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
@@ -359,7 +360,8 @@ export function OutfitHistory({ onRefresh }: OutfitHistoryProps) {
             ))}
           </div>
         )}
-      </ScrollArea>
+        </ScrollArea>
+      </div>
 
       {/* Detail Dialog */}
       {selectedOutfit && (

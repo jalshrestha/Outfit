@@ -144,7 +144,7 @@ export function MainLayout() {
           </div>
         </TabsContent>
 
-        <TabsContent value="history" className="flex-1 overflow-hidden m-0 p-4">
+        <TabsContent value="history" className="flex-1 m-0 p-4 overflow-hidden flex flex-col">
           <OutfitHistory key={historyRefreshKey} onRefresh={() => setHistoryRefreshKey(prev => prev + 1)} />
         </TabsContent>
       </Tabs>
