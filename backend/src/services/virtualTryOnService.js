@@ -1,21 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getMimeType } from '../utils/mimeTypes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Helper to get MIME type from file extension
-function getMimeType(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  const mimeTypes = {
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.png': 'image/png',
-    '.webp': 'image/webp',
-  };
-  return mimeTypes[ext] || 'image/jpeg';
-}
 
 // Helper function to convert image file to proper format for SDK
 function fileToGenerativePart(filePath, mimeType) {

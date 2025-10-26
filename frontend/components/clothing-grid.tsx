@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Check, X, ArrowLeft, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState, useRef, useEffect } from "react"
+import { useTouchSwipe } from "@/hooks/use-touch-swipe"
 
 interface ClothingGridProps {
   items: ClothingItem[]
@@ -20,8 +21,6 @@ interface ClothingGridProps {
 
 export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems, currentFilter = "all" }: ClothingGridProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [touchStart, setTouchStart] = useState<number | null>(null)
-  const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Reset currentIndex when items array changes or becomes smaller than currentIndex
@@ -37,32 +36,6 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
     return selectedItems[item.category]?.id === item.id
   }
 
-  // Touch/swipe handlers
-  const minSwipeDistance = 50
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null)
-    setTouchStart(e.targetTouches[0].clientX)
-  }
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX)
-  }
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return
-    const distance = touchStart - touchEnd
-    const isLeftSwipe = distance > minSwipeDistance
-    const isRightSwipe = distance < -minSwipeDistance
-
-    if (isLeftSwipe && currentIndex < items.length - 1) {
-      setCurrentIndex(prev => prev + 1)
-    }
-    if (isRightSwipe && currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1)
-    }
-  }
-
   const goToNext = () => {
     if (currentIndex < items.length - 1) {
       setCurrentIndex(prev => prev + 1)
@@ -74,6 +47,12 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
       setCurrentIndex(prev => prev - 1)
     }
   }
+
+  // Touch/swipe handlers using custom hook
+  const { onTouchStart, onTouchMove, onTouchEnd } = useTouchSwipe({
+    onLeftSwipe: goToNext,
+    onRightSwipe: goToPrev,
+  })
 
   if (items.length === 0) {
     return (

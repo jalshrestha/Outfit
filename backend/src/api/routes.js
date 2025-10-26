@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { upload } from '../config/multer.js';
 import { getCategoryFromGemini } from '../services/geminiService.js';
 import { generateVirtualTryOn, generateClothingLabel } from '../services/virtualTryOnService.js';
+import { rateOutfitWithAI } from '../services/outfitRatingService.js';
 
 const router = Router();
 
@@ -63,6 +64,26 @@ router.post('/try-on', async (req, res) => {
   } catch (error) {
     console.error('Virtual try-on error:', error);
     res.status(500).json({ error: 'Failed to generate virtual try-on: ' + error.message });
+  }
+});
+
+// 4. Outfit Rating Endpoint (using Gemini AI)
+router.post('/rate-outfit', async (req, res) => {
+  try {
+    const { modelUrl, clothingItems } = req.body;
+    if (!modelUrl || !clothingItems) {
+      return res.status(400).json({ error: 'modelUrl and clothingItems are required.' });
+    }
+
+    console.log('⭐ Rating outfit...');
+    console.log('Model:', modelUrl);
+    console.log('Clothing items:', clothingItems);
+
+    const rating = await rateOutfitWithAI(modelUrl, clothingItems);
+    res.status(200).json(rating);
+  } catch (error) {
+    console.error('Outfit rating error:', error);
+    res.status(500).json({ error: 'Failed to rate outfit: ' + error.message });
   }
 });
 

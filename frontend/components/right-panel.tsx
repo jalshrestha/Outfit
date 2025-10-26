@@ -3,9 +3,11 @@
 import { useState, useRef } from "react"
 import { UploadModel } from "@/components/upload-model"
 import { GenerateButton } from "@/components/generate-button"
-import { generateTryOn, getImageUrl } from "@/lib/api"
-import { ArrowLeft, ArrowRight, Download } from "lucide-react"
+import { generateTryOn, getImageUrl, rateOutfit, saveOutfit } from "@/lib/api"
+import { ArrowLeft, ArrowRight, Download, X, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/ui/use-toast"
+import { useTouchSwipe } from "@/hooks/use-touch-swipe"
 import type { ClothingItem } from "@/types"
 
 interface RightPanelProps {
@@ -18,8 +20,10 @@ interface RightPanelProps {
   onModelImageChange: (image: string) => void
   onNextModel?: () => void
   onPrevModel?: () => void
+  onDeleteModel?: () => void
   modelCount?: number
   currentModelIndex?: number
+  onOutfitSaved?: () => void
 }
 
 export function RightPanel({
@@ -28,39 +32,22 @@ export function RightPanel({
   onModelImageChange,
   onNextModel,
   onPrevModel,
+  onDeleteModel,
   modelCount = 1,
-  currentModelIndex = 0
+  currentModelIndex = 0,
+  onOutfitSaved
 }: RightPanelProps) {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
-  const [touchStart, setTouchStart] = useState<number | null>(null)
-  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [currentOutfitData, setCurrentOutfitData] = useState<any>(null)
   const imageRef = useRef<HTMLDivElement>(null)
+  const { toast } = useToast()
 
-  // Touch/swipe handlers
-  const minSwipeDistance = 50
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null)
-    setTouchStart(e.targetTouches[0].clientX)
-  }
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX)
-  }
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return
-    const distance = touchStart - touchEnd
-    const isLeftSwipe = distance > minSwipeDistance
-    const isRightSwipe = distance < -minSwipeDistance
-
-    if (isLeftSwipe && onNextModel) {
-      onNextModel()
-    }
-    if (isRightSwipe && onPrevModel) {
-      onPrevModel()
-    }
-  }
+  // Touch/swipe handlers using custom hook
+  const { onTouchStart, onTouchMove, onTouchEnd } = useTouchSwipe({
+    onLeftSwipe: onNextModel,
+    onRightSwipe: onPrevModel,
+  })
 
   const handleGenerate = async () => {
     try {
@@ -98,22 +85,124 @@ export function RightPanel({
       const generatedImageUrl = getImageUrl(response.resultUrl)
 
       setGeneratedImage(generatedImageUrl)
+
+      // Store outfit data for saving later
+      setCurrentOutfitData({
+        modelUrl: `/uploads/${modelUrl}`,
+        clothingItems,
+        generatedImageUrl,
+        selectedItems
+      })
+
+      toast({
+        title: "Outfit Generated!",
+        description: "Click the save button to add this outfit to your history.",
+      })
     } catch (error) {
       console.error('Error generating outfit:', error)
-      alert('Failed to generate outfit. Please try again.')
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate outfit. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
-  const handleDownload = () => {
+  const handleSaveOutfit = async () => {
+    if (!currentOutfitData || !generatedImage) {
+      toast({
+        title: "Nothing to Save",
+        description: "Please generate an outfit first.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      // Get AI rating for the outfit
+      const rating = await rateOutfit({
+        modelUrl: currentOutfitData.modelUrl,
+        clothingItems: currentOutfitData.clothingItems
+      })
+
+      // Generate outfit name based on items
+      const itemNames = []
+      if (selectedItems.top) itemNames.push(selectedItems.top.name)
+      if (selectedItems.bottom) itemNames.push(selectedItems.bottom.name)
+      if (selectedItems.shoes) itemNames.push(selectedItems.shoes.name)
+      const outfitName = itemNames.join(' + ') || 'Untitled Outfit'
+
+      // Create outfit object
+      const outfit = {
+        id: `outfit-${Date.now()}`,
+        name: outfitName,
+        timestamp: Date.now(),
+        generatedImageUrl: generatedImage,
+        modelImageUrl: modelImage,
+        clothingItems: {
+          top: selectedItems.top,
+          bottom: selectedItems.bottom,
+          shoes: selectedItems.shoes
+        },
+        metadata: {
+          aiRating: rating.rating,
+          style: rating.style,
+          occasion: rating.occasion,
+          tags: rating.tags
+        },
+        isFavorite: false
+      }
+
+      // Save to localStorage
+      saveOutfit(outfit)
+
+      toast({
+        title: "Outfit Saved!",
+        description: `"${outfitName}" has been added to your history.`,
+      })
+
+      // Notify parent component
+      if (onOutfitSaved) {
+        onOutfitSaved()
+      }
+    } catch (error) {
+      console.error('Error saving outfit:', error)
+      toast({
+        title: "Save Failed",
+        description: "Failed to save outfit. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDownload = async () => {
     if (!generatedImage) return
 
-    // Create a temporary anchor element to trigger download
-    const link = document.createElement('a')
-    link.href = generatedImage
-    link.download = `virtual-tryon-${Date.now()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    try {
+      // Fetch the image as a blob to avoid CORS issues
+      const response = await fetch(generatedImage)
+      const blob = await response.blob()
+
+      // Create a blob URL
+      const blobUrl = window.URL.createObjectURL(blob)
+
+      // Create a temporary anchor element to trigger download
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = `virtual-tryon-${Date.now()}.png`
+      document.body.appendChild(link)
+      link.click()
+
+      // Clean up
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(blobUrl)
+    } catch (error) {
+      console.error('Error downloading image:', error)
+      alert('Failed to download image. Please try again.')
+    }
   }
 
   return (
@@ -172,7 +261,7 @@ export function RightPanel({
       <div className="flex-1 overflow-hidden p-4">
         <div 
           ref={imageRef}
-          className="relative h-full overflow-hidden rounded-lg border border-border bg-gradient-to-br from-gray-50 to-gray-100 shadow-lg"
+          className="relative h-full overflow-hidden rounded-lg border border-border bg-gradient-to-br from-muted/30 to-muted/50 dark:from-muted/20 dark:to-muted/30 shadow-lg backdrop-blur-sm"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -190,16 +279,41 @@ export function RightPanel({
             />
           </div>
 
-          {/* Download button - only show when there's a generated image */}
+          {/* Action buttons - only show when there's a generated image */}
           {generatedImage && (
+            <div className="absolute right-2 top-2 flex gap-2 z-10">
+              <Button
+                variant="default"
+                size="icon"
+                className="h-10 w-10 shadow-lg"
+                onClick={handleSaveOutfit}
+                disabled={isSaving}
+                title="Save to history"
+              >
+                <Save className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-10 w-10 shadow-lg"
+                onClick={handleDownload}
+                title="Download generated image"
+              >
+                <Download className="h-5 w-5" />
+              </Button>
+            </div>
+          )}
+
+          {/* Delete model button - only show when there's a model image and no generated image */}
+          {modelImage && !generatedImage && onDeleteModel && (
             <Button
-              variant="secondary"
+              variant="destructive"
               size="icon"
               className="absolute right-2 top-2 h-10 w-10 shadow-lg z-10"
-              onClick={handleDownload}
-              title="Download generated image"
+              onClick={onDeleteModel}
+              title="Delete model image"
             >
-              <Download className="h-5 w-5" />
+              <X className="h-5 w-5" />
             </Button>
           )}
           
@@ -207,13 +321,13 @@ export function RightPanel({
           {modelCount > 1 && (
             <>
               <div className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity duration-200">
-                <div className="bg-black/20 backdrop-blur-sm rounded-full p-2">
-                  <ArrowLeft className="h-4 w-4 text-white" />
+                <div className="bg-background/80 backdrop-blur-sm rounded-full p-2 border border-border/50 shadow-lg">
+                  <ArrowLeft className="h-4 w-4 text-foreground" />
                 </div>
               </div>
               <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity duration-200">
-                <div className="bg-black/20 backdrop-blur-sm rounded-full p-2">
-                  <ArrowRight className="h-4 w-4 text-white" />
+                <div className="bg-background/80 backdrop-blur-sm rounded-full p-2 border border-border/50 shadow-lg">
+                  <ArrowRight className="h-4 w-4 text-foreground" />
                 </div>
               </div>
             </>
