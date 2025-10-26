@@ -20,4 +20,24 @@ export interface Outfit {
   style: string
 }
 
+export interface SavedOutfit {
+  id: string
+  name: string
+  timestamp: number
+  generatedImageUrl: string
+  modelImageUrl: string
+  clothingItems: {
+    top?: ClothingItem
+    bottom?: ClothingItem
+    shoes?: ClothingItem
+  }
+  metadata: {
+    aiRating: number
+    style: string
+    occasion: string
+    tags: string[]
+  }
+  isFavorite: boolean
+}
+
 export type CategoryFilter = "all" | "top" | "bottom" | "shoes"

@@ -3,9 +3,10 @@
 import { useState, useRef } from "react"
 import { UploadModel } from "@/components/upload-model"
 import { GenerateButton } from "@/components/generate-button"
-import { generateTryOn, getImageUrl } from "@/lib/api"
-import { ArrowLeft, ArrowRight, Download, X } from "lucide-react"
+import { generateTryOn, getImageUrl, rateOutfit, saveOutfit } from "@/lib/api"
+import { ArrowLeft, ArrowRight, Download, X, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
 import type { ClothingItem } from "@/types"
 
 interface RightPanelProps {
@@ -21,6 +22,7 @@ interface RightPanelProps {
   onDeleteModel?: () => void
   modelCount?: number
   currentModelIndex?: number
+  onOutfitSaved?: () => void
 }
 
 export function RightPanel({
@@ -31,12 +33,16 @@ export function RightPanel({
   onPrevModel,
   onDeleteModel,
   modelCount = 1,
-  currentModelIndex = 0
+  currentModelIndex = 0,
+  onOutfitSaved
 }: RightPanelProps) {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [currentOutfitData, setCurrentOutfitData] = useState<any>(null)
   const imageRef = useRef<HTMLDivElement>(null)
+  const { toast } = useToast()
 
   // Touch/swipe handlers
   const minSwipeDistance = 50
@@ -100,9 +106,96 @@ export function RightPanel({
       const generatedImageUrl = getImageUrl(response.resultUrl)
 
       setGeneratedImage(generatedImageUrl)
+
+      // Store outfit data for saving later
+      setCurrentOutfitData({
+        modelUrl: `/uploads/${modelUrl}`,
+        clothingItems,
+        generatedImageUrl,
+        selectedItems
+      })
+
+      toast({
+        title: "Outfit Generated!",
+        description: "Click the save button to add this outfit to your history.",
+      })
     } catch (error) {
       console.error('Error generating outfit:', error)
-      alert('Failed to generate outfit. Please try again.')
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate outfit. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleSaveOutfit = async () => {
+    if (!currentOutfitData || !generatedImage) {
+      toast({
+        title: "Nothing to Save",
+        description: "Please generate an outfit first.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      // Get AI rating for the outfit
+      const rating = await rateOutfit({
+        modelUrl: currentOutfitData.modelUrl,
+        clothingItems: currentOutfitData.clothingItems
+      })
+
+      // Generate outfit name based on items
+      const itemNames = []
+      if (selectedItems.top) itemNames.push(selectedItems.top.name)
+      if (selectedItems.bottom) itemNames.push(selectedItems.bottom.name)
+      if (selectedItems.shoes) itemNames.push(selectedItems.shoes.name)
+      const outfitName = itemNames.join(' + ') || 'Untitled Outfit'
+
+      // Create outfit object
+      const outfit = {
+        id: `outfit-${Date.now()}`,
+        name: outfitName,
+        timestamp: Date.now(),
+        generatedImageUrl: generatedImage,
+        modelImageUrl: modelImage,
+        clothingItems: {
+          top: selectedItems.top,
+          bottom: selectedItems.bottom,
+          shoes: selectedItems.shoes
+        },
+        metadata: {
+          aiRating: rating.rating,
+          style: rating.style,
+          occasion: rating.occasion,
+          tags: rating.tags
+        },
+        isFavorite: false
+      }
+
+      // Save to localStorage
+      saveOutfit(outfit)
+
+      toast({
+        title: "Outfit Saved!",
+        description: `"${outfitName}" has been added to your history.`,
+      })
+
+      // Notify parent component
+      if (onOutfitSaved) {
+        onOutfitSaved()
+      }
+    } catch (error) {
+      console.error('Error saving outfit:', error)
+      toast({
+        title: "Save Failed",
+        description: "Failed to save outfit. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -207,17 +300,29 @@ export function RightPanel({
             />
           </div>
 
-          {/* Download button - only show when there's a generated image */}
+          {/* Action buttons - only show when there's a generated image */}
           {generatedImage && (
-            <Button
-              variant="secondary"
-              size="icon"
-              className="absolute right-2 top-2 h-10 w-10 shadow-lg z-10"
-              onClick={handleDownload}
-              title="Download generated image"
-            >
-              <Download className="h-5 w-5" />
-            </Button>
+            <div className="absolute right-2 top-2 flex gap-2 z-10">
+              <Button
+                variant="default"
+                size="icon"
+                className="h-10 w-10 shadow-lg"
+                onClick={handleSaveOutfit}
+                disabled={isSaving}
+                title="Save to history"
+              >
+                <Save className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-10 w-10 shadow-lg"
+                onClick={handleDownload}
+                title="Download generated image"
+              >
+                <Download className="h-5 w-5" />
+              </Button>
+            </div>
           )}
 
           {/* Delete model button - only show when there's a model image and no generated image */}
