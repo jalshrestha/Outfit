@@ -41,3 +41,21 @@ export interface SavedOutfit {
 }
 
 export type CategoryFilter = "all" | "top" | "bottom" | "shoes"
+
+export interface TrendingOutfit {
+  title: string
+  imageUrl: string
+  price: string | null
+  category: "top" | "bottom" | "shoes" | "outfit"
+  source: "Pinterest" | "Hollister" | "H&M"
+  link: string
+}
+
+export interface TrendingResponse {
+  success: boolean
+  count: number
+  source: string
+  category: string
+  timestamp: string
+  data: TrendingOutfit[]
+}
