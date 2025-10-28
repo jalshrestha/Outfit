@@ -15,6 +15,7 @@ interface RightPanelProps {
     top?: ClothingItem
     bottom?: ClothingItem
     shoes?: ClothingItem
+    "full-outfit"?: ClothingItem
   }
   modelImage: string
   onModelImageChange: (image: string) => void
@@ -59,25 +60,34 @@ export function RightPanel({
       // Build clothing items object with paths
       const clothingItems: any = {}
 
-      if (selectedItems.top?.imageUrl) {
-        const topPath = selectedItems.top.imageUrl.includes('/uploads/')
-          ? '/uploads/' + selectedItems.top.imageUrl.split('/uploads/')[1]
-          : selectedItems.top.imageUrl
-        clothingItems.upper_body = topPath
-      }
+      // Check for full outfit first
+      if (selectedItems["full-outfit"]?.imageUrl) {
+        const fullOutfitPath = selectedItems["full-outfit"].imageUrl.includes('/uploads/')
+          ? '/uploads/' + selectedItems["full-outfit"].imageUrl.split('/uploads/')[1]
+          : selectedItems["full-outfit"].imageUrl
+        clothingItems.full_outfit = fullOutfitPath
+      } else {
+        // Add individual clothing items if no full outfit
+        if (selectedItems.top?.imageUrl) {
+          const topPath = selectedItems.top.imageUrl.includes('/uploads/')
+            ? '/uploads/' + selectedItems.top.imageUrl.split('/uploads/')[1]
+            : selectedItems.top.imageUrl
+          clothingItems.upper_body = topPath
+        }
 
-      if (selectedItems.bottom?.imageUrl) {
-        const bottomPath = selectedItems.bottom.imageUrl.includes('/uploads/')
-          ? '/uploads/' + selectedItems.bottom.imageUrl.split('/uploads/')[1]
-          : selectedItems.bottom.imageUrl
-        clothingItems.lower_body = bottomPath
-      }
+        if (selectedItems.bottom?.imageUrl) {
+          const bottomPath = selectedItems.bottom.imageUrl.includes('/uploads/')
+            ? '/uploads/' + selectedItems.bottom.imageUrl.split('/uploads/')[1]
+            : selectedItems.bottom.imageUrl
+          clothingItems.lower_body = bottomPath
+        }
 
-      if (selectedItems.shoes?.imageUrl) {
-        const shoesPath = selectedItems.shoes.imageUrl.includes('/uploads/')
-          ? '/uploads/' + selectedItems.shoes.imageUrl.split('/uploads/')[1]
-          : selectedItems.shoes.imageUrl
-        clothingItems.shoes = shoesPath
+        if (selectedItems.shoes?.imageUrl) {
+          const shoesPath = selectedItems.shoes.imageUrl.includes('/uploads/')
+            ? '/uploads/' + selectedItems.shoes.imageUrl.split('/uploads/')[1]
+            : selectedItems.shoes.imageUrl
+          clothingItems.shoes = shoesPath
+        }
       }
 
       // Call the backend API to generate the try-on image
@@ -128,9 +138,13 @@ export function RightPanel({
 
       // Generate outfit name based on items
       const itemNames = []
-      if (selectedItems.top) itemNames.push(selectedItems.top.name)
-      if (selectedItems.bottom) itemNames.push(selectedItems.bottom.name)
-      if (selectedItems.shoes) itemNames.push(selectedItems.shoes.name)
+      if (selectedItems["full-outfit"]) {
+        itemNames.push(selectedItems["full-outfit"].name)
+      } else {
+        if (selectedItems.top) itemNames.push(selectedItems.top.name)
+        if (selectedItems.bottom) itemNames.push(selectedItems.bottom.name)
+        if (selectedItems.shoes) itemNames.push(selectedItems.shoes.name)
+      }
       const outfitName = itemNames.join(' + ') || 'Untitled Outfit'
 
       // Create outfit object
@@ -143,7 +157,8 @@ export function RightPanel({
         clothingItems: {
           top: selectedItems.top,
           bottom: selectedItems.bottom,
-          shoes: selectedItems.shoes
+          shoes: selectedItems.shoes,
+          fullOutfit: selectedItems["full-outfit"]
         },
         metadata: {
           aiRating: rating.rating,
@@ -338,7 +353,7 @@ export function RightPanel({
       <div className="flex-shrink-0 border-t border-border p-4">
         <GenerateButton
           onGenerate={handleGenerate}
-          disabled={!modelImage || (!selectedItems.top && !selectedItems.bottom && !selectedItems.shoes)}
+          disabled={!modelImage || (!selectedItems.top && !selectedItems.bottom && !selectedItems.shoes && !selectedItems["full-outfit"])}
         />
       </div>
     </div>

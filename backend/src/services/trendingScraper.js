@@ -70,12 +70,22 @@ async function loadFromCache(source) {
 }
 
 /**
- * Scrape trending outfits from Pinterest using Puppeteer
+ * Add timeout wrapper to prevent hanging
+ */
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), ms))
+  ]);
+}
+
+/**
+ * Scrape trending outfits from Pinterest using Puppeteer (internal function)
  * @param {string} keyword - URL or search keyword (default: men's streetwear collection)
  * @param {number} maxResults - Maximum number of results (default: 10)
  * @returns {Promise<Array>} Array of outfit objects
  */
-export async function fetchPinterestTrends(keyword = 'https://www.pinterest.com/ideas/mens-streetwear/895613796302/', maxResults = 10) {
+async function _fetchPinterestTrendsInternal(keyword = 'https://www.pinterest.com/ideas/mens-streetwear/895613796302/', maxResults = 10) {
   let browser;
 
   try {
@@ -84,13 +94,14 @@ export async function fetchPinterestTrends(keyword = 'https://www.pinterest.com/
     console.log(`   Max Results: ${maxResults}`);
 
     browser = await puppeteer.launch({
-      headless: 'new',
+      headless: true,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-blink-features=AutomationControlled'
       ]
     });
 
@@ -111,12 +122,20 @@ export async function fetchPinterestTrends(keyword = 'https://www.pinterest.com/
     console.log('🌐 Navigating to:', targetUrl);
 
     await page.goto(targetUrl, {
-      waitUntil: 'networkidle2',
-      timeout: 30000
+      waitUntil: 'domcontentloaded',
+      timeout: 60000
     });
 
-    // Wait for content to load
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Wait for pins to load - Pinterest uses lazy loading
+    console.log('⏳ Waiting for content to load...');
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    
+    // Try to wait for pin elements to appear
+    try {
+      await page.waitForSelector('[data-test-id="pin"]', { timeout: 10000 });
+    } catch (e) {
+      console.log('⚠️  Could not find standard pin selector, trying alternatives...');
+    }
 
     // Scroll to load more images
     console.log('📜 Scrolling to load more images...');
@@ -131,20 +150,94 @@ export async function fetchPinterestTrends(keyword = 'https://www.pinterest.com/
     const outfits = await page.evaluate((maxResults) => {
       const results = [];
 
-      // Try multiple selectors as Pinterest structure may vary
-      const pinElements = document.querySelectorAll('[data-test-id="pin"]');
+      // Try multiple selectors to find pins
+      let pinElements = [];
+      
+      // Try different selectors in order of preference
+      const selectors = [
+        '[data-test-id="pin"]',
+        'article[data-test-id="pin"]',
+        '[data-test-id="pin-rep"]',
+        'div[data-test-id="pin-rep"]',
+        'div[role="listitem"]',
+        '.pinContainer',
+        '.Grid__Item'
+      ];
 
+      for (const selector of selectors) {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+          console.log(`Found ${elements.length} pins using selector: ${selector}`);
+          pinElements = Array.from(elements);
+          break;
+        }
+      }
+
+      console.log(`Total pin elements found: ${pinElements.length}`);
+
+      // Process pins and extract data
       for (let i = 0; i < Math.min(pinElements.length, maxResults); i++) {
         const pin = pinElements[i];
 
         try {
-          // Extract image
-          const img = pin.querySelector('img');
+          // Find all images in the pin
+          const images = pin.querySelectorAll('img');
+          let img = null;
+          let imageUrl = null;
+
+          // Strategy: Look for the highest quality image
+          // 1. Check data sources (Pinterest often uses data-src for lazy loading)
+          for (const candidateImg of images) {
+            if (candidateImg.hasAttribute('data-src')) {
+              const dataSrc = candidateImg.getAttribute('data-src');
+              if (dataSrc && !dataSrc.includes('placeholder') && !dataSrc.includes('1x') && !dataSrc.includes('75x')) {
+                imageUrl = dataSrc;
+                img = candidateImg;
+                break;
+              }
+            }
+          }
+
+          // 2. Get the best quality image from src (usually the largest one)
+          if (!imageUrl) {
+            for (const candidateImg of images) {
+              const src = candidateImg.src;
+              if (src && !src.includes('placeholder')) {
+                // Skip very small images (likely icons or placeholders)
+                if (!src.includes('1x') && !src.includes('75x') && !src.includes('236x')) {
+                  imageUrl = src;
+                  img = candidateImg;
+                  break;
+                }
+              }
+            }
+          }
+
+          // 3. Fallback: take any non-placeholder image
+          if (!imageUrl && images.length > 0) {
+            for (const candidateImg of images) {
+              const src = candidateImg.src || candidateImg.getAttribute('data-src');
+              if (src && !src.includes('placeholder')) {
+                imageUrl = src;
+                img = candidateImg;
+                break;
+              }
+            }
+          }
+
+          // Find the link
           const link = pin.querySelector('a[href*="/pin/"]');
 
-          if (img && img.src && !img.src.includes('placeholder')) {
-            const imageUrl = img.src;
-            const title = img.alt || `Pinterest Outfit ${i + 1}`;
+          if (imageUrl) {
+            // Clean up the image URL - Pinterest sometimes uses encoded URLs
+            if (imageUrl.includes('https://i.pinimg.com')) {
+              // Try to get the full resolution image by replacing size parameters
+              // Pinterest URLs look like: /236x/abc123/ or /474x/abc123/
+              // We want: /originals/abc123/
+              imageUrl = imageUrl.replace(/\/\d+x\d*\//g, '/originals/');
+            }
+
+            const title = (img && img.alt) || `Pinterest Outfit ${i + 1}`;
             const pinUrl = link ? `https://www.pinterest.com${link.getAttribute('href')}` : '';
 
             results.push({
@@ -155,12 +248,15 @@ export async function fetchPinterestTrends(keyword = 'https://www.pinterest.com/
               source: 'Pinterest',
               link: pinUrl
             });
+
+            console.log(`Processed pin ${i + 1}: ${title}`);
           }
         } catch (error) {
-          console.log('Error processing pin:', error.message);
+          console.log(`Error processing pin ${i}:`, error.message);
         }
       }
 
+      console.log(`Total results collected: ${results.length}`);
       return results;
     }, maxResults);
 
@@ -173,6 +269,18 @@ export async function fetchPinterestTrends(keyword = 'https://www.pinterest.com/
 
   } catch (error) {
     console.error('❌ Pinterest scraper error:', error.message);
+    console.error('Error details:', error);
+
+    // Ensure browser is closed even if there's an error
+    try {
+      if (browser) {
+        const pages = await browser.pages();
+        await Promise.all(pages.map(page => page.close()));
+        await browser.close();
+      }
+    } catch (closeError) {
+      console.error('Error closing browser:', closeError.message);
+    }
 
     // Try to load from cache as fallback
     console.log('🔄 Attempting to load from cache...');
@@ -188,9 +296,32 @@ export async function fetchPinterestTrends(keyword = 'https://www.pinterest.com/
     await saveToCache('pinterest', samplePinterestData);
     return samplePinterestData.slice(0, maxResults);
   } finally {
+    // Make sure browser is always closed
     if (browser) {
-      await browser.close();
+      try {
+        const pages = await browser.pages();
+        await Promise.all(pages.map(page => page.close()));
+        await browser.close();
+        console.log('🔒 Browser closed');
+      } catch (closeError) {
+        console.error('Error in finally block:', closeError.message);
+      }
     }
+  }
+}
+
+/**
+ * Public wrapper with timeout protection and default parameters
+ */
+export async function fetchPinterestTrends(keyword = 'https://www.pinterest.com/ideas/mens-streetwear/895613796302/', maxResults = 10) {
+  try {
+    // Set a 90-second timeout for the entire scraping operation
+    return await withTimeout(_fetchPinterestTrendsInternal(keyword, maxResults), 90000);
+  } catch (error) {
+    if (error.message === 'Operation timed out') {
+      console.error('❌ Pinterest scraper timed out after 90 seconds');
+    }
+    throw error;
   }
 }
 

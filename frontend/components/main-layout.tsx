@@ -15,6 +15,7 @@ export function MainLayout() {
     top?: ClothingItem
     bottom?: ClothingItem
     shoes?: ClothingItem
+    "full-outfit"?: ClothingItem
   }>({})
 
   const [modelImages, setModelImages] = useState<string[]>([])

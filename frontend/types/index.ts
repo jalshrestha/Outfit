@@ -2,7 +2,7 @@ export interface ClothingItem {
   id: string
   image?: string
   imageUrl?: string
-  category: "top" | "bottom" | "shoes"
+  category: "top" | "bottom" | "shoes" | "full-outfit"
   name: string
   selected?: boolean
   color?: string
@@ -40,7 +40,7 @@ export interface SavedOutfit {
   isFavorite: boolean
 }
 
-export type CategoryFilter = "all" | "top" | "bottom" | "shoes"
+export type CategoryFilter = "all" | "top" | "bottom" | "shoes" | "full-outfit"
 
 export interface TrendingOutfit {
   title: string

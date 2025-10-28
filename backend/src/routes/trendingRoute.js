@@ -50,8 +50,13 @@ router.get('/', async (req, res) => {
     // Fetch based on source parameter
     switch (source.toLowerCase()) {
       case 'pinterest':
-        // Don't pass keyword - let it use the default URL from the function
-        results = await fetchPinterestTrends(undefined, limit);
+        try {
+          // Don't pass keyword - let it use the default URL from the function
+          results = await fetchPinterestTrends(undefined, limit);
+        } catch (error) {
+          console.error('Pinterest fetch failed:', error.message);
+          results = [];
+        }
         break;
 
       case 'hollister':
@@ -80,11 +85,17 @@ router.get('/', async (req, res) => {
         });
     }
 
+    // Ensure results is an array
+    if (!Array.isArray(results)) {
+      console.warn('⚠️  Results is not an array, defaulting to empty array');
+      results = [];
+    }
+
     // Filter by category if specified
     if (category) {
       const categoryLower = category.toLowerCase();
       results = results.filter(item =>
-        item.category.toLowerCase() === categoryLower
+        item && item.category && item.category.toLowerCase() === categoryLower
       );
       console.log(`🔍 Filtered to ${results.length} items in category: ${category}`);
     }

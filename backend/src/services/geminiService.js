@@ -40,7 +40,7 @@ export const getCategoryFromGemini = async (localPath) => {
             },
           },
           {
-            text: "Analyze this clothing image. Respond with a single JSON object containing one key, 'category'. The value for 'category' must be one of the following exact strings: 'upper_body', 'lower_body', or 'shoes'."
+            text: "Analyze this clothing image. Respond with a single JSON object containing one key, 'category'. The value for 'category' must be one of the following exact strings: 'upper_body', 'lower_body', 'shoes', or 'full_outfit'. If the image shows a complete outfit with multiple pieces together (like top and pants together, or a complete look), classify it as 'full_outfit'."
           }
         ]
       }
@@ -74,7 +74,7 @@ export const getCategoryFromGemini = async (localPath) => {
     category = jsonResponse.category;
   } catch (e) {
     // If not JSON, check if it's a plain string with a valid category
-    const validCategories = ['upper_body', 'lower_body', 'shoes'];
+    const validCategories = ['upper_body', 'lower_body', 'shoes', 'full_outfit'];
     const cleanCategory = responseText.replace(/["']/g, '').trim();
     if (validCategories.includes(cleanCategory)) {
       category = cleanCategory;
@@ -130,7 +130,7 @@ export const getCategoryFromUrl = async (imageUrl) => {
             },
           },
           {
-            text: "Analyze this clothing/fashion image. Respond with a single JSON object containing one key, 'category'. The value for 'category' must be one of the following exact strings: 'top', 'bottom', or 'shoes'. For full outfits or unclear items, default to 'top'."
+            text: "Analyze this clothing/fashion image. Respond with a single JSON object containing one key, 'category'. The value for 'category' must be one of the following exact strings: 'top', 'bottom', 'shoes', or 'full_outfit'. If the image shows a complete outfit with multiple pieces together (like top and pants together, or a complete look with a person wearing multiple clothing items), classify it as 'full_outfit'."
           }
         ]
       }
@@ -164,7 +164,7 @@ export const getCategoryFromUrl = async (imageUrl) => {
     category = jsonResponse.category;
   } catch (e) {
     // If not JSON, check if it's a plain string with a valid category
-    const validCategories = ['top', 'bottom', 'shoes'];
+    const validCategories = ['top', 'bottom', 'shoes', 'full_outfit'];
     const cleanCategory = responseText.replace(/["']/g, '').trim();
     if (validCategories.includes(cleanCategory)) {
       category = cleanCategory;

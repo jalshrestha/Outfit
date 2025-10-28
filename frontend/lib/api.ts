@@ -20,6 +20,7 @@ export interface ClothingItems {
   upper_body?: string
   lower_body?: string
   shoes?: string
+  full_outfit?: string
 }
 
 /**

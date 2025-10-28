@@ -24,8 +24,18 @@ router.post('/categorize', async (req, res) => {
     }
     console.log('📋 Received categorize request for:', localPath);
     const category = await getCategoryFromGemini(localPath);
-    console.log('✅ Category determined:', category);
-    res.status(200).json({ category });
+    
+    // Convert backend category format to frontend format
+    const categoryMap = {
+      'upper_body': 'top',
+      'lower_body': 'bottom',
+      'full_outfit': 'full-outfit',
+      'shoes': 'shoes'
+    };
+    
+    const frontendCategory = categoryMap[category] || category;
+    console.log('✅ Category determined:', frontendCategory);
+    res.status(200).json({ category: frontendCategory });
   } catch (error) {
     console.error('❌ Categorization error:', error.message);
     console.error('Full error:', error);

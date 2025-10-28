@@ -36,7 +36,7 @@ export function TrendingOutfits() {
       const params = new URLSearchParams({
         source: "pinterest",
         ...(category !== "all" && { category }),
-        maxResults: "10"
+        maxResults: "15"
       })
 
       const response = await fetch(`${API_BASE_URL}/api/trending?${params}`)
@@ -69,7 +69,7 @@ export function TrendingOutfits() {
       const response = await fetch(`${API_BASE_URL}/api/trending/refresh`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: "pinterest", maxResults: 10 })
+        body: JSON.stringify({ source: "pinterest", maxResults: 15 })
       })
 
       const data = await response.json()
@@ -115,7 +115,7 @@ export function TrendingOutfits() {
       }
 
       const classifyData = await classifyResponse.json()
-      const aiCategory = classifyData.category as "top" | "bottom" | "shoes"
+      const aiCategory = classifyData.category as "top" | "bottom" | "shoes" | "full-outfit"
 
       console.log(`🤖 Gemini classified as: ${aiCategory}`)
 
@@ -284,7 +284,9 @@ export function TrendingOutfits() {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
-                        target.src = "/placeholder.png"
+                        if (!target.src.includes("/placeholder.jpg")) {
+                          target.src = "/placeholder.jpg"
+                        }
                       }}
                     />
 
