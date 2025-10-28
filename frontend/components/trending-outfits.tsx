@@ -269,120 +269,70 @@ export function TrendingOutfits() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
-            {outfits.map((outfit, index) => (
-              <Card
-                key={`${outfit.source}-${index}`}
-                className="group hover:shadow-lg transition-all duration-300 overflow-hidden border-border/50 hover:border-primary/50"
-              >
-                <CardContent className="p-0">
-                  {/* Image */}
-                  <div className="relative aspect-[3/4] overflow-hidden bg-muted">
-                    <img
-                      src={outfit.imageUrl}
-                      alt={outfit.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        if (!target.src.includes("/placeholder.jpg")) {
-                          target.src = "/placeholder.jpg"
-                        }
-                      }}
-                    />
-
-                    {/* Overlay on hover */}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
-                      {classifyingId === `${outfit.source}-${outfit.imageUrl}` ? (
-                        <Button
-                          size="sm"
-                          disabled
-                          className="gap-2 shadow-lg"
-                        >
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Classifying...
-                        </Button>
-                      ) : (
-                        <>
-                          <Button
-                            size="sm"
-                            onClick={() => handleAddToWardrobe(outfit)}
-                            className="gap-2 shadow-lg"
-                          >
-                            <Plus className="h-4 w-4" />
-                            Add to Wardrobe
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => window.open(outfit.link, "_blank")}
-                            className="gap-2 shadow-lg"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Source badge */}
-                    <div className="absolute top-2 left-2">
-                      <Badge className={`${getSourceColor(outfit.source)} border-0 shadow-md`}>
-                        {outfit.source}
-                      </Badge>
-                    </div>
-
-                    {/* Category badge */}
-                    <div className="absolute top-2 right-2">
-                      <Badge className={`${getCategoryColor(outfit.category)} border-0 shadow-md capitalize`}>
-                        {outfit.category}
-                      </Badge>
-                    </div>
-
-                    {/* Price badge */}
-                    {outfit.price && (
-                      <div className="absolute bottom-2 left-2">
-                        <Badge className="bg-white/90 text-black border-0 shadow-md font-semibold">
-                          {outfit.price}
-                        </Badge>
+          <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 pb-4">
+              {outfits.map((outfit, index) => (
+                <Card
+                  key={`${outfit.source}-${index}`}
+                  className="group cursor-pointer border-0 shadow-sm hover:shadow-xl transition-shadow duration-200 overflow-hidden rounded-2xl bg-card"
+                  onClick={() => window.open(outfit.link, "_blank")}
+                >
+                  <CardContent className="p-0">
+                    {/* Image */}
+                    <div className="relative aspect-[3/4] overflow-hidden bg-muted/30 rounded-t-2xl">
+                      <img
+                        src={outfit.imageUrl}
+                        alt={outfit.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          if (!target.src.includes("/placeholder.jpg")) {
+                            target.src = "/placeholder.jpg"
+                          }
+                        }}
+                      />
+                      
+                      {/* Subtle hover overlay with action button */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div className="absolute bottom-3 right-3">
+                          {classifyingId === `${outfit.source}-${outfit.imageUrl}` ? (
+                            <Button
+                              size="sm"
+                              disabled
+                              className="gap-1.5 shadow-lg bg-white/95 hover:bg-white text-black"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              <span className="text-xs">Adding...</span>
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleAddToWardrobe(outfit)
+                              }}
+                              className="gap-1.5 shadow-lg bg-white/95 hover:bg-white text-black"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                              <span className="text-xs">Add</span>
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-3">
-                    <h3 className="font-medium text-sm line-clamp-2 mb-2 leading-snug">
-                      {outfit.title}
-                    </h3>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {outfit.source}
-                      </span>
-                      {classifyingId === `${outfit.source}-${outfit.imageUrl}` ? (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          disabled
-                          className="h-7 px-2 gap-1 text-xs"
-                        >
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          AI...
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleAddToWardrobe(outfit)}
-                          className="h-7 px-2 gap-1 text-xs hover:bg-primary/10 hover:text-primary"
-                        >
-                          <Plus className="h-3 w-3" />
-                          Add
-                        </Button>
-                      )}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+
+                    {/* Clean info section */}
+                    <div className="p-3">
+                      <h3 className="font-medium text-sm line-clamp-2 leading-snug text-foreground/90">
+                        {outfit.title}
+                      </h3>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         )}
       </div>
