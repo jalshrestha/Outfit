@@ -49,51 +49,67 @@ export const generateVirtualTryOn = async (modelUrl, clothingItems) => {
     const parts = [];
     let clothingDescriptions = [];
 
-    // Add clothing images first (skip external URLs)
-    if (clothingItems.upper_body && !isExternalUrl(clothingItems.upper_body)) {
-      const upperPath = path.join(uploadsDir, clothingItems.upper_body);
-      if (fs.existsSync(upperPath)) {
-        const imageData = fs.readFileSync(upperPath);
+    // Check if we have a full outfit
+    if (clothingItems.full_outfit && !isExternalUrl(clothingItems.full_outfit)) {
+      const fullOutfitPath = path.join(uploadsDir, clothingItems.full_outfit);
+      if (fs.existsSync(fullOutfitPath)) {
+        const imageData = fs.readFileSync(fullOutfitPath);
         const base64Image = imageData.toString('base64');
         parts.push({
           inline_data: {
-            mime_type: getMimeType(upperPath),
+            mime_type: getMimeType(fullOutfitPath),
             data: base64Image,
           },
         });
-        clothingDescriptions.push('the upper body clothing (shirt/jacket/top) from the first image');
+        clothingDescriptions.push('the complete outfit from the first image');
       }
-    }
-
-    if (clothingItems.lower_body && !isExternalUrl(clothingItems.lower_body)) {
-      const lowerPath = path.join(uploadsDir, clothingItems.lower_body);
-      if (fs.existsSync(lowerPath)) {
-        const imageData = fs.readFileSync(lowerPath);
-        const base64Image = imageData.toString('base64');
-        const ordinal = parts.filter(p => p.inline_data).length === 0 ? 'first' : parts.filter(p => p.inline_data).length === 1 ? 'second' : 'third';
-        parts.push({
-          inline_data: {
-            mime_type: getMimeType(lowerPath),
-            data: base64Image,
-          },
-        });
-        clothingDescriptions.push(`the lower body clothing (pants/skirt/shorts) from the ${ordinal} image`);
+    } else {
+      // Add individual clothing items (skip external URLs)
+      if (clothingItems.upper_body && !isExternalUrl(clothingItems.upper_body)) {
+        const upperPath = path.join(uploadsDir, clothingItems.upper_body);
+        if (fs.existsSync(upperPath)) {
+          const imageData = fs.readFileSync(upperPath);
+          const base64Image = imageData.toString('base64');
+          parts.push({
+            inline_data: {
+              mime_type: getMimeType(upperPath),
+              data: base64Image,
+            },
+          });
+          clothingDescriptions.push('the upper body clothing (shirt/jacket/top) from the first image');
+        }
       }
-    }
 
-    if (clothingItems.shoes && !isExternalUrl(clothingItems.shoes)) {
-      const shoesPath = path.join(uploadsDir, clothingItems.shoes);
-      if (fs.existsSync(shoesPath)) {
-        const imageData = fs.readFileSync(shoesPath);
-        const base64Image = imageData.toString('base64');
-        const ordinal = parts.filter(p => p.inline_data).length === 0 ? 'first' : parts.filter(p => p.inline_data).length === 1 ? 'second' : 'third';
-        parts.push({
-          inline_data: {
-            mime_type: getMimeType(shoesPath),
-            data: base64Image,
-          },
-        });
-        clothingDescriptions.push(`the shoes from the ${ordinal} image`);
+      if (clothingItems.lower_body && !isExternalUrl(clothingItems.lower_body)) {
+        const lowerPath = path.join(uploadsDir, clothingItems.lower_body);
+        if (fs.existsSync(lowerPath)) {
+          const imageData = fs.readFileSync(lowerPath);
+          const base64Image = imageData.toString('base64');
+          const ordinal = parts.filter(p => p.inline_data).length === 0 ? 'first' : parts.filter(p => p.inline_data).length === 1 ? 'second' : 'third';
+          parts.push({
+            inline_data: {
+              mime_type: getMimeType(lowerPath),
+              data: base64Image,
+            },
+          });
+          clothingDescriptions.push(`the lower body clothing (pants/skirt/shorts) from the ${ordinal} image`);
+        }
+      }
+
+      if (clothingItems.shoes && !isExternalUrl(clothingItems.shoes)) {
+        const shoesPath = path.join(uploadsDir, clothingItems.shoes);
+        if (fs.existsSync(shoesPath)) {
+          const imageData = fs.readFileSync(shoesPath);
+          const base64Image = imageData.toString('base64');
+          const ordinal = parts.filter(p => p.inline_data).length === 0 ? 'first' : parts.filter(p => p.inline_data).length === 1 ? 'second' : 'third';
+          parts.push({
+            inline_data: {
+              mime_type: getMimeType(shoesPath),
+              data: base64Image,
+            },
+          });
+          clothingDescriptions.push(`the shoes from the ${ordinal} image`);
+        }
       }
     }
 
@@ -115,8 +131,13 @@ export const generateVirtualTryOn = async (modelUrl, clothingItems) => {
       },
     });
 
-    // Create the text prompt
-    const textPrompt = `Create a professional e-commerce fashion photo. Take ${clothingDescriptions.join(', ')} and let the person from the ${modelImageOrdinal} image wear them. Generate a realistic, full-body shot of the person wearing all the selected clothing items together. The person's pose, face, and body should remain exactly the same as in the original photo. Make the clothes fit naturally on their body with proper lighting, shadows, and realistic fabric textures. Ensure the outfit looks cohesive and professional.`;
+    // Create the text prompt based on whether it's a full outfit or individual items
+    let textPrompt;
+    if (clothingItems.full_outfit) {
+      textPrompt = `Create a professional e-commerce fashion photo. From the first image, extract and identify the complete outfit (all clothing items worn by the person). Then, take these exact same clothing items and fit them onto the person from the ${modelImageOrdinal} image. The result should show the person from the ${modelImageOrdinal} image wearing the complete outfit from the first image. Keep the model person's pose, face, body, and background exactly as in their original photo. Transfer only the clothing items - make them fit naturally with proper sizing, lighting, shadows, and realistic fabric textures. Ensure the outfit looks cohesive and professionally fitted.`;
+    } else {
+      textPrompt = `Create a professional e-commerce fashion photo. Take ${clothingDescriptions.join(', ')} and let the person from the ${modelImageOrdinal} image wear them. Generate a realistic, full-body shot of the person wearing all the selected clothing items together. The person's pose, face, and body should remain exactly the same as in the original photo. Make the clothes fit naturally on their body with proper lighting, shadows, and realistic fabric textures. Ensure the outfit looks cohesive and professional.`;
+    }
 
     // Add text prompt as the last part
     parts.push({ text: textPrompt });

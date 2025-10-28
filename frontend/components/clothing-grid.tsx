@@ -203,7 +203,7 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
         {/* Item info */}
         <div className="text-center">
           <p className="text-sm font-medium text-foreground">{currentItem.name}</p>
-          <p className="text-xs text-muted-foreground capitalize">{currentItem.category}</p>
+          <p className="text-xs text-muted-foreground capitalize">{currentItem.category === 'full-outfit' ? 'Full Outfit' : currentItem.category}</p>
         </div>
       </div>
     )
@@ -349,7 +349,7 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
       {/* Item info */}
       <div className="text-center">
         <p className="text-xs font-medium text-foreground">{currentItem.name}</p>
-        <p className="text-[10px] text-muted-foreground capitalize">{currentItem.category}</p>
+        <p className="text-[10px] text-muted-foreground capitalize">{currentItem.category === 'full-outfit' ? 'Full Outfit' : currentItem.category}</p>
       </div>
     </div>
   )

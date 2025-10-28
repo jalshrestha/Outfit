@@ -17,10 +17,12 @@ export const mockCategorizeClothing = async (file: File): Promise<ClothingItem> 
     const categoryMap = {
       'upper_body': 'top' as const,
       'lower_body': 'bottom' as const,
-      'shoes': 'shoes' as const
+      'shoes': 'shoes' as const,
+      'full_outfit': 'full-outfit' as const,
+      'full-outfit': 'full-outfit' as const
     }
 
-    const category = categoryMap[categorizeResponse.category]
+    const category = categoryMap[categorizeResponse.category] || categorizeResponse.category
 
     console.log('🏷️  Generating descriptive label...')
     // Generate AI label for the clothing

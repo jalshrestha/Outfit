@@ -15,6 +15,7 @@ interface LeftPanelProps {
     top?: ClothingItem
     bottom?: ClothingItem
     shoes?: ClothingItem
+    "full-outfit"?: ClothingItem
   }
 }
 

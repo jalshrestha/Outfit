@@ -4,8 +4,9 @@ import { useState, useEffect } from "react"
 import { LeftPanel } from "@/components/left-panel"
 import { RightPanel } from "@/components/right-panel"
 import { OutfitHistory } from "@/components/outfit-history"
+import { TrendingOutfits } from "@/components/trending-outfits"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Shirt, History } from "lucide-react"
+import { Shirt, History, TrendingUp } from "lucide-react"
 import type { ClothingItem } from "@/types"
 
 export function MainLayout() {
@@ -14,6 +15,7 @@ export function MainLayout() {
     top?: ClothingItem
     bottom?: ClothingItem
     shoes?: ClothingItem
+    "full-outfit"?: ClothingItem
   }>({})
 
   const [modelImages, setModelImages] = useState<string[]>([])
@@ -109,10 +111,14 @@ export function MainLayout() {
     <main className="h-[calc(100vh-80px)] overflow-hidden">
       <Tabs defaultValue="wardrobe" className="h-full flex flex-col">
         <div className="flex-shrink-0 border-b border-border px-4">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="wardrobe" className="gap-2">
               <Shirt className="h-4 w-4" />
               Wardrobe & Try-On
+            </TabsTrigger>
+            <TabsTrigger value="trending" className="gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Trending Outfits
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-2">
               <History className="h-4 w-4" />
@@ -142,6 +148,10 @@ export function MainLayout() {
               onOutfitSaved={handleOutfitSaved}
             />
           </div>
+        </TabsContent>
+
+        <TabsContent value="trending" className="flex-1 m-0 p-4 overflow-hidden">
+          <TrendingOutfits />
         </TabsContent>
 
         <TabsContent value="history" className="flex-1 m-0 p-4 overflow-hidden flex flex-col">

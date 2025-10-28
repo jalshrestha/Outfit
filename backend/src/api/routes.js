@@ -3,6 +3,7 @@ import { upload } from '../config/multer.js';
 import { getCategoryFromGemini } from '../services/geminiService.js';
 import { generateVirtualTryOn, generateClothingLabel } from '../services/virtualTryOnService.js';
 import { rateOutfitWithAI } from '../services/outfitRatingService.js';
+import trendingRoute from '../routes/trendingRoute.js';
 
 const router = Router();
 
@@ -23,8 +24,18 @@ router.post('/categorize', async (req, res) => {
     }
     console.log('📋 Received categorize request for:', localPath);
     const category = await getCategoryFromGemini(localPath);
-    console.log('✅ Category determined:', category);
-    res.status(200).json({ category });
+    
+    // Convert backend category format to frontend format
+    const categoryMap = {
+      'upper_body': 'top',
+      'lower_body': 'bottom',
+      'full_outfit': 'full-outfit',
+      'shoes': 'shoes'
+    };
+    
+    const frontendCategory = categoryMap[category] || category;
+    console.log('✅ Category determined:', frontendCategory);
+    res.status(200).json({ category: frontendCategory });
   } catch (error) {
     console.error('❌ Categorization error:', error.message);
     console.error('Full error:', error);
@@ -86,5 +97,8 @@ router.post('/rate-outfit', async (req, res) => {
     res.status(500).json({ error: 'Failed to rate outfit: ' + error.message });
   }
 });
+
+// 5. Trending Outfits Endpoint
+router.use('/trending', trendingRoute);
 
 export default router;

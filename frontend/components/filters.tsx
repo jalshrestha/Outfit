@@ -13,6 +13,7 @@ const filters: { value: CategoryFilter; label: string }[] = [
   { value: "top", label: "Tops" },
   { value: "bottom", label: "Bottoms" },
   { value: "shoes", label: "Shoes" },
+  { value: "full-outfit", label: "Full Outfits" },
 ]
 
 export function Filters({ currentFilter, onFilterChange }: FiltersProps) {

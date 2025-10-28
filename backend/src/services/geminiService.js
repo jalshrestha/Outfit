@@ -40,7 +40,7 @@ export const getCategoryFromGemini = async (localPath) => {
             },
           },
           {
-            text: "Analyze this clothing image. Respond with a single JSON object containing one key, 'category'. The value for 'category' must be one of the following exact strings: 'upper_body', 'lower_body', or 'shoes'."
+            text: "Analyze this clothing image. Respond with a single JSON object containing one key, 'category'. The value for 'category' must be one of the following exact strings: 'upper_body', 'lower_body', 'shoes', or 'full_outfit'. If the image shows a complete outfit with multiple pieces together (like top and pants together, or a complete look), classify it as 'full_outfit'."
           }
         ]
       }
@@ -74,7 +74,7 @@ export const getCategoryFromGemini = async (localPath) => {
     category = jsonResponse.category;
   } catch (e) {
     // If not JSON, check if it's a plain string with a valid category
-    const validCategories = ['upper_body', 'lower_body', 'shoes'];
+    const validCategories = ['upper_body', 'lower_body', 'shoes', 'full_outfit'];
     const cleanCategory = responseText.replace(/["']/g, '').trim();
     if (validCategories.includes(cleanCategory)) {
       category = cleanCategory;
@@ -84,5 +84,97 @@ export const getCategoryFromGemini = async (localPath) => {
   }
 
   console.log('✅ Category:', category);
+  return category;
+};
+
+/**
+ * Classify clothing from a remote image URL using Gemini API
+ * @param {string} imageUrl - URL of the image to classify
+ * @returns {Promise<string>} - One of: 'top', 'bottom', 'shoes'
+ */
+export const getCategoryFromUrl = async (imageUrl) => {
+  const API_KEY = process.env.GEMINI_API_KEY;
+
+  if (!API_KEY) {
+    throw new Error('GEMINI_API_KEY is not set in environment variables');
+  }
+
+  console.log('🔍 Classifying image from URL:', imageUrl);
+
+  // Fetch the image from the URL
+  const imageResponse = await fetch(imageUrl);
+
+  if (!imageResponse.ok) {
+    throw new Error(`Failed to fetch image: ${imageResponse.status} ${imageResponse.statusText}`);
+  }
+
+  const imageBuffer = await imageResponse.arrayBuffer();
+  const base64Image = Buffer.from(imageBuffer).toString('base64');
+
+  // Determine MIME type from content-type header
+  let mimeType = imageResponse.headers.get('content-type') || 'image/jpeg';
+
+  // Fallback to jpeg if content-type is not an image
+  if (!mimeType.startsWith('image/')) {
+    mimeType = 'image/jpeg';
+  }
+
+  const requestBody = {
+    contents: [
+      {
+        parts: [
+          {
+            inline_data: {
+              mime_type: mimeType,
+              data: base64Image,
+            },
+          },
+          {
+            text: "Analyze this clothing/fashion image. Respond with a single JSON object containing one key, 'category'. The value for 'category' must be one of the following exact strings: 'top', 'bottom', 'shoes', or 'full_outfit'. If the image shows a complete outfit with multiple pieces together (like top and pants together, or a complete look with a person wearing multiple clothing items), classify it as 'full_outfit'."
+          }
+        ]
+      }
+    ]
+  };
+
+  const response = await fetch(`${API_ENDPOINT}?key=${API_KEY}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini API error: ${response.status} ${response.statusText} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  const responseText = data.candidates[0].content.parts[0].text.trim();
+
+  console.log('📝 Raw Gemini response:', responseText);
+
+  // Try to parse as JSON first
+  let category;
+  try {
+    // Remove markdown code blocks if present
+    const cleanedText = responseText.replace(/```json|```/g, '').trim();
+    const jsonResponse = JSON.parse(cleanedText);
+    category = jsonResponse.category;
+  } catch (e) {
+    // If not JSON, check if it's a plain string with a valid category
+    const validCategories = ['top', 'bottom', 'shoes', 'full_outfit'];
+    const cleanCategory = responseText.replace(/["']/g, '').trim();
+    if (validCategories.includes(cleanCategory)) {
+      category = cleanCategory;
+    } else {
+      // Default to 'top' if unable to parse
+      console.warn(`⚠️ Unable to parse category from: ${responseText}, defaulting to 'top'`);
+      category = 'top';
+    }
+  }
+
+  console.log('✅ Category from URL:', category);
   return category;
 };
