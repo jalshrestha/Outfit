@@ -5,7 +5,7 @@ export interface UploadResponse {
 }
 
 export interface CategorizeResponse {
-  category: 'upper_body' | 'lower_body' | 'shoes'
+  category: 'upper_body' | 'lower_body' | 'shoes' | 'full-outfit' | 'full_outfit'
 }
 
 export interface LabelResponse {

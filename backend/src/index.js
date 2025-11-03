@@ -29,7 +29,9 @@ app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
   credentials: true 
 }));
-app.use(express.json());
+// Increase JSON payload limit to handle base64 image data
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Serve the static uploads directory
 const uploadsPath = path.join(__dirname, '../../frontend/public/uploads');

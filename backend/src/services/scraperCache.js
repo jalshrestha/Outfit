@@ -28,7 +28,7 @@ export async function saveToCache(source, data) {
     };
 
     await fs.writeFile(CACHE_FILE, JSON.stringify(cache, null, 2));
-    console.log(`✅ Saved ${data.length} items to cache for ${source}`);
+    console.log(`   └─ ✅ Saved ${data.length} items to cache for ${source}`);
   } catch (error) {
     console.error('❌ Error saving to cache:', error.message);
   }

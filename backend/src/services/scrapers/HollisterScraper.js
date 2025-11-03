@@ -25,7 +25,7 @@ export class HollisterScraper extends BaseScraper {
     const { maxResults = 20 } = options;
 
     try {
-      console.log(`🔍 [Hollister] Starting scraper...`);
+      console.log(`\n🔍 [Hollister] Starting scraper...`);
       console.log(`   Max Results: ${maxResults}`);
 
       const url = 'https://www.hollisterco.com/shop/us/mens-new-arrivals';
@@ -117,9 +117,10 @@ export class HollisterScraper extends BaseScraper {
         }
       });
 
-      console.log(`✅ [Hollister] Scraped ${outfits.length} outfits`);
-
+      console.log(`✅ [Hollister] Successfully scraped ${outfits.length} outfits`);
+      console.log(`   └─ Saving to cache...`);
       await saveToCache('hollister', outfits);
+      console.log(`   └─ ✅ Cache updated\n`);
 
       return outfits.map(item => this.normalizeItem(item));
 

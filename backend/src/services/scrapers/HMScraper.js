@@ -25,7 +25,7 @@ export class HMScraper extends BaseScraper {
     const { maxResults = 20 } = options;
 
     try {
-      console.log(`🔍 [H&M] Starting scraper...`);
+      console.log(`\n🔍 [H&M] Starting scraper...`);
       console.log(`   Max Results: ${maxResults}`);
 
       const url = 'https://www2.hm.com/en_us/men/new-arrivals.html';
@@ -117,9 +117,10 @@ export class HMScraper extends BaseScraper {
         }
       });
 
-      console.log(`✅ [H&M] Scraped ${outfits.length} outfits`);
-
+      console.log(`✅ [H&M] Successfully scraped ${outfits.length} outfits`);
+      console.log(`   └─ Saving to cache...`);
       await saveToCache('hm', outfits);
+      console.log(`   └─ ✅ Cache updated\n`);
 
       return outfits.map(item => this.normalizeItem(item));
 

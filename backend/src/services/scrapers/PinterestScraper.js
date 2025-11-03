@@ -27,7 +27,7 @@ export class PinterestScraper extends BaseScraper {
 
     let browser;
     try {
-      console.log(`🔍 [Pinterest] Starting scraper...`);
+      console.log(`\n🔍 [Pinterest] Starting scraper...`);
       console.log(`   Target: "${targetUrl}"`);
       console.log(`   Max Results: ${maxResults}`);
 
@@ -61,10 +61,12 @@ export class PinterestScraper extends BaseScraper {
         waitUntil: 'domcontentloaded',
         timeout: 60000
       });
+      console.log('   ✓ Page loaded');
 
       // Wait for pins to load
-      console.log('⏳ [Pinterest] Waiting for content...');
+      console.log('⏳ [Pinterest] Waiting for content to render...');
       await new Promise(resolve => setTimeout(resolve, 5000));
+      console.log('   ✓ Content rendered');
 
       try {
         await page.waitForSelector('[data-test-id="pin"]', { timeout: 10000 });
@@ -163,10 +165,12 @@ export class PinterestScraper extends BaseScraper {
         return results;
       }, maxResults);
 
-      console.log(`✅ [Pinterest] Scraped ${outfits.length} outfits`);
+      console.log(`✅ [Pinterest] Successfully scraped ${outfits.length} outfits`);
+      console.log(`   └─ Saving to cache...`);
 
       // Save to cache
       await saveToCache('pinterest', outfits);
+      console.log(`   └─ ✅ Cache updated\n`);
 
       return outfits.map(item => this.normalizeItem(item));
 

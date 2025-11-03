@@ -4,7 +4,7 @@ import { UploadGarment } from "@/components/upload-garment"
 import { ClothingGrid } from "@/components/clothing-grid"
 import { Filters } from "@/components/filters"
 import type { ClothingItem, CategoryFilter } from "@/types"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface LeftPanelProps {
   clothingItems: ClothingItem[]
@@ -22,7 +22,17 @@ interface LeftPanelProps {
 export function LeftPanel({ clothingItems, onAddClothing, onSelectItem, onDeleteItem, selectedItems }: LeftPanelProps) {
   const [filter, setFilter] = useState<CategoryFilter>("all")
 
-  const filteredItems = filter === "all" ? clothingItems : clothingItems.filter((item) => item.category === filter)
+  // Normalize all items to ensure consistent category format
+  const normalizedItems = clothingItems.map(item => ({
+    ...item,
+    category: ((String(item.category) === "full_outfit" || item.category === "full-outfit") ? "full-outfit" : item.category) as ClothingItem['category']
+  }))
+
+  const filteredItems = filter === "all" 
+    ? normalizedItems 
+    : normalizedItems.filter((item) => {
+        return item.category === filter
+      })
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card">

@@ -40,7 +40,7 @@ export const getCategoryFromGemini = async (localPath) => {
             },
           },
           {
-            text: "Analyze this clothing image. Respond with a single JSON object containing one key, 'category'. The value for 'category' must be one of the following exact strings: 'upper_body', 'lower_body', 'shoes', or 'full_outfit'. If the image shows a complete outfit with multiple pieces together (like top and pants together, or a complete look), classify it as 'full_outfit'."
+            text: "Analyze this clothing image. Respond with a single JSON object containing one key, 'category'. The value for 'category' must be one of the following exact strings: 'upper_body', 'lower_body', 'shoes', or 'full_outfit'. \n\nClassification rules:\n- 'upper_body': Single item showing only a top, shirt, jacket, sweater, hoodie, or similar upper garment\n- 'lower_body': Single item showing only pants, jeans, shorts, skirt, or similar lower garment\n- 'shoes': Single item showing only shoes, sneakers, boots, or footwear\n- 'full_outfit': A complete outfit showing multiple pieces together (person wearing top AND bottom together, complete looks, styled outfits with multiple garments visible, fashion photos showing full body outfits). If you see a person wearing both top and bottom clothing items together, it's a 'full_outfit'."
           }
         ]
       }
@@ -90,7 +90,7 @@ export const getCategoryFromGemini = async (localPath) => {
 /**
  * Classify clothing from a remote image URL using Gemini API
  * @param {string} imageUrl - URL of the image to classify
- * @returns {Promise<string>} - One of: 'top', 'bottom', 'shoes'
+ * @returns {Promise<string>} - One of: 'upper_body', 'lower_body', 'shoes', 'full_outfit'
  */
 export const getCategoryFromUrl = async (imageUrl) => {
   const API_KEY = process.env.GEMINI_API_KEY;
@@ -130,7 +130,7 @@ export const getCategoryFromUrl = async (imageUrl) => {
             },
           },
           {
-            text: "Analyze this clothing/fashion image. Respond with a single JSON object containing one key, 'category'. The value for 'category' must be one of the following exact strings: 'top', 'bottom', 'shoes', or 'full_outfit'. If the image shows a complete outfit with multiple pieces together (like top and pants together, or a complete look with a person wearing multiple clothing items), classify it as 'full_outfit'."
+            text: "Analyze this clothing/fashion image. Respond with a single JSON object containing one key, 'category'. The value for 'category' must be one of the following exact strings: 'upper_body', 'lower_body', 'shoes', or 'full_outfit'. \n\nClassification rules:\n- 'upper_body': Single item showing only a top, shirt, jacket, sweater, hoodie, or similar upper garment\n- 'lower_body': Single item showing only pants, jeans, shorts, skirt, or similar lower garment\n- 'shoes': Single item showing only shoes, sneakers, boots, or footwear\n- 'full_outfit': A complete outfit showing multiple pieces together (person wearing top AND bottom together, complete looks, styled outfits with multiple garments visible, fashion photos showing full body outfits). If you see a person wearing both top and bottom clothing items together, it's a 'full_outfit'."
           }
         ]
       }
@@ -164,14 +164,21 @@ export const getCategoryFromUrl = async (imageUrl) => {
     category = jsonResponse.category;
   } catch (e) {
     // If not JSON, check if it's a plain string with a valid category
-    const validCategories = ['top', 'bottom', 'shoes', 'full_outfit'];
-    const cleanCategory = responseText.replace(/["']/g, '').trim();
+    const validCategories = ['upper_body', 'lower_body', 'shoes', 'full_outfit', 'top', 'bottom'];
+    const cleanCategory = responseText.replace(/["']/g, '').trim().toLowerCase();
+    
+    // Normalize any frontend format back to backend format
+    const normalizeMap = {
+      'top': 'upper_body',
+      'bottom': 'lower_body'
+    };
+    
     if (validCategories.includes(cleanCategory)) {
-      category = cleanCategory;
+      category = normalizeMap[cleanCategory] || cleanCategory;
     } else {
-      // Default to 'top' if unable to parse
-      console.warn(`⚠️ Unable to parse category from: ${responseText}, defaulting to 'top'`);
-      category = 'top';
+      // Default to 'upper_body' if unable to parse
+      console.warn(`⚠️ Unable to parse category from: ${responseText}, defaulting to 'upper_body'`);
+      category = 'upper_body';
     }
   }
 

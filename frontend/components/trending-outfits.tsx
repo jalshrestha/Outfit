@@ -15,6 +15,7 @@ import {
   Sparkles
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { getImageUrl } from "@/lib/api"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
 
@@ -63,6 +64,11 @@ export function TrendingOutfits() {
 
   const handleRefresh = async () => {
     setLoading(true)
+    toast({
+      title: "Scraping Fresh Data...",
+      description: `Fetching new items from ${source} (this may take 30-90 seconds)`,
+    })
+    
     try {
       const response = await fetch(`${API_BASE_URL}/api/trending/refresh`, {
         method: "POST",
@@ -70,20 +76,26 @@ export function TrendingOutfits() {
         body: JSON.stringify({ source: source, maxResults: 15 })
       })
 
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`)
+      }
+
       const data = await response.json()
 
       if (data.success) {
         toast({
-          title: "Success",
-          description: `Refreshed ${data.itemsRefreshed} items`,
+          title: "Refresh Complete!",
+          description: `Successfully scraped ${data.itemsRefreshed} new items from ${source}`,
         })
-        fetchTrendingOutfits()
+        // Fetch the newly scraped data
+        await fetchTrendingOutfits()
+      } else {
+        throw new Error(data.message || "Refresh failed")
       }
     } catch (error) {
-      console.error("Error refreshing:", error)
       toast({
-        title: "Error",
-        description: "Failed to refresh trending data",
+        title: "Refresh Failed",
+        description: error instanceof Error ? error.message : "Failed to refresh trending data. Please try again.",
         variant: "destructive"
       })
     } finally {
@@ -115,66 +127,86 @@ export function TrendingOutfits() {
       const classifyData = await classifyResponse.json()
       const aiCategory = classifyData.category as "top" | "bottom" | "shoes" | "full-outfit"
 
-      console.log(`🤖 Gemini classified as: ${aiCategory}`)
+      // Step 2: Download the image through backend proxy (bypasses CORS)
+      const downloadResponse = await fetch(`${API_BASE_URL}/api/trending/download-image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: outfit.imageUrl })
+      })
 
-      // Step 2: Download the image and convert to data URL
-      const response = await fetch(outfit.imageUrl)
-      const blob = await response.blob()
-
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string
-
-        // Create a clothing item with AI-determined category
-        const newItem: ClothingItem = {
-          id: `trending-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-          image: dataUrl,
-          imageUrl: dataUrl,
-          category: aiCategory, // Use AI classification instead of hardcoded
-          name: outfit.title,
-          brand: outfit.source
-        }
-
-        // Get existing items from localStorage
-        const existingItems = localStorage.getItem("clothingItems")
-        const items: ClothingItem[] = existingItems ? JSON.parse(existingItems) : []
-
-        // Add new item
-        items.push(newItem)
-        localStorage.setItem("clothingItems", JSON.stringify(items))
-
-        toast({
-          title: "Added to Wardrobe!",
-          description: `${outfit.title} added as "${aiCategory}" using AI classification`,
-        })
-
-        setClassifyingId(null)
+      if (!downloadResponse.ok) {
+        throw new Error("Failed to download image")
       }
 
-      reader.readAsDataURL(blob)
-    } catch (error) {
-      console.error("Error adding to wardrobe:", error)
-      setClassifyingId(null)
+      const downloadData = await downloadResponse.json()
+      const imageUrl = getImageUrl(downloadData.url)
 
-      // Fallback: Add with just the URL and default category
+      // Create a clothing item with AI-determined category
       const newItem: ClothingItem = {
         id: `trending-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-        imageUrl: outfit.imageUrl,
-        category: outfit.category === "outfit" ? "top" : outfit.category,
+        image: imageUrl,
+        imageUrl: imageUrl,
+        category: aiCategory, // Use AI classification instead of hardcoded
         name: outfit.title,
         brand: outfit.source
       }
 
+      // Get existing items from localStorage
       const existingItems = localStorage.getItem("clothingItems")
       const items: ClothingItem[] = existingItems ? JSON.parse(existingItems) : []
+
+      // Add new item
       items.push(newItem)
       localStorage.setItem("clothingItems", JSON.stringify(items))
 
       toast({
         title: "Added to Wardrobe!",
-        description: `${outfit.title} has been added (classification failed, using fallback)`,
-        variant: "default"
+        description: `${outfit.title} added as "${aiCategory}" using AI classification`,
       })
+
+      setClassifyingId(null)
+    } catch (error) {
+      setClassifyingId(null)
+
+      // Fallback: Try to download image and add with default category
+      try {
+        const downloadResponse = await fetch(`${API_BASE_URL}/api/trending/download-image`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl: outfit.imageUrl })
+        })
+
+        if (downloadResponse.ok) {
+          const downloadData = await downloadResponse.json()
+          const imageUrl = getImageUrl(downloadData.url)
+          const newItem: ClothingItem = {
+            id: `trending-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+            image: imageUrl,
+            imageUrl: imageUrl,
+            category: outfit.category === "outfit" ? "full-outfit" : outfit.category,
+            name: outfit.title,
+            brand: outfit.source
+          }
+
+          const existingItems = localStorage.getItem("clothingItems")
+          const items: ClothingItem[] = existingItems ? JSON.parse(existingItems) : []
+          items.push(newItem)
+          localStorage.setItem("clothingItems", JSON.stringify(items))
+
+          toast({
+            title: "Added to Wardrobe!",
+            description: `${outfit.title} has been added (using fallback category)`,
+          })
+        } else {
+          throw new Error("Download failed")
+        }
+      } catch (fallbackError) {
+        toast({
+          title: "Error",
+          description: "Failed to add outfit to wardrobe. Please try again.",
+          variant: "destructive"
+        })
+      }
     }
   }
 

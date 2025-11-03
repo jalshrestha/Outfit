@@ -35,10 +35,15 @@ export const mockCategorizeClothing = async (file: File): Promise<ClothingItem> 
       console.error('Label generation failed, using default')
     }
 
+    // Ensure category is in correct format
+    const normalizedCategory = (String(category) === "full_outfit" || category === "full-outfit") ? "full-outfit" : category
+
+    console.log('📦 Creating clothing item with category:', normalizedCategory)
+
     return {
       id: Date.now().toString() + Math.random(),
       imageUrl: getImageUrl(uploadResponse.url),
-      category,
+      category: normalizedCategory as "top" | "bottom" | "shoes" | "full-outfit",
       name: itemName,
       selected: false,
     }
