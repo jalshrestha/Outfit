@@ -28,7 +28,14 @@ export function MainLayout() {
     const saved = localStorage.getItem("clothingItems")
     if (saved) {
       const savedItems = JSON.parse(saved)
-      setClothingItems(savedItems)
+      // Normalize categories when loading
+      const normalizedItems = savedItems.map((item: ClothingItem) => ({
+        ...item,
+        category: ((String(item.category) === "full_outfit" || item.category === "full-outfit") ? "full-outfit" : item.category) as ClothingItem['category']
+      }))
+      setClothingItems(normalizedItems)
+      // Update localStorage with normalized categories
+      localStorage.setItem("clothingItems", JSON.stringify(normalizedItems))
     }
 
     // Load model images from localStorage
@@ -42,7 +49,13 @@ export function MainLayout() {
   }, [])
 
   const handleAddClothing = (item: ClothingItem) => {
-    const updated = [...clothingItems, item]
+    // Ensure category is normalized
+    const normalizedItem = {
+      ...item,
+      category: ((String(item.category) === "full_outfit" || item.category === "full-outfit") ? "full-outfit" : item.category) as ClothingItem['category']
+    }
+    
+    const updated = [...clothingItems, normalizedItem]
     setClothingItems(updated)
     localStorage.setItem("clothingItems", JSON.stringify(updated))
   }

@@ -12,10 +12,10 @@ import {
   Loader2,
   RefreshCw,
   ExternalLink,
-  Filter,
   Sparkles
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { getImageUrl } from "@/lib/api"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
 
@@ -23,19 +23,18 @@ export function TrendingOutfits() {
   const [outfits, setOutfits] = useState<TrendingOutfit[]>([])
   const [loading, setLoading] = useState(false)
   const [classifyingId, setClassifyingId] = useState<string | null>(null)
-  const [category, setCategory] = useState<"all" | "top" | "bottom" | "shoes" | "outfit">("all")
+  const [source, setSource] = useState<"pinterest" | "hollister" | "hm">("pinterest")
   const { toast } = useToast()
 
   useEffect(() => {
     fetchTrendingOutfits()
-  }, [category])
+  }, [source])
 
   const fetchTrendingOutfits = async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
-        source: "pinterest",
-        ...(category !== "all" && { category }),
+        source: source,
         maxResults: "15"
       })
 
@@ -65,27 +64,38 @@ export function TrendingOutfits() {
 
   const handleRefresh = async () => {
     setLoading(true)
+    toast({
+      title: "Scraping Fresh Data...",
+      description: `Fetching new items from ${source} (this may take 30-90 seconds)`,
+    })
+    
     try {
       const response = await fetch(`${API_BASE_URL}/api/trending/refresh`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: "pinterest", maxResults: 15 })
+        body: JSON.stringify({ source: source, maxResults: 15 })
       })
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`)
+      }
 
       const data = await response.json()
 
       if (data.success) {
         toast({
-          title: "Success",
-          description: `Refreshed ${data.itemsRefreshed} items`,
+          title: "Refresh Complete!",
+          description: `Successfully scraped ${data.itemsRefreshed} new items from ${source}`,
         })
-        fetchTrendingOutfits()
+        // Fetch the newly scraped data
+        await fetchTrendingOutfits()
+      } else {
+        throw new Error(data.message || "Refresh failed")
       }
     } catch (error) {
-      console.error("Error refreshing:", error)
       toast({
-        title: "Error",
-        description: "Failed to refresh trending data",
+        title: "Refresh Failed",
+        description: error instanceof Error ? error.message : "Failed to refresh trending data. Please try again.",
         variant: "destructive"
       })
     } finally {
@@ -117,66 +127,86 @@ export function TrendingOutfits() {
       const classifyData = await classifyResponse.json()
       const aiCategory = classifyData.category as "top" | "bottom" | "shoes" | "full-outfit"
 
-      console.log(`🤖 Gemini classified as: ${aiCategory}`)
+      // Step 2: Download the image through backend proxy (bypasses CORS)
+      const downloadResponse = await fetch(`${API_BASE_URL}/api/trending/download-image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: outfit.imageUrl })
+      })
 
-      // Step 2: Download the image and convert to data URL
-      const response = await fetch(outfit.imageUrl)
-      const blob = await response.blob()
-
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string
-
-        // Create a clothing item with AI-determined category
-        const newItem: ClothingItem = {
-          id: `trending-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-          image: dataUrl,
-          imageUrl: dataUrl,
-          category: aiCategory, // Use AI classification instead of hardcoded
-          name: outfit.title,
-          brand: outfit.source
-        }
-
-        // Get existing items from localStorage
-        const existingItems = localStorage.getItem("clothingItems")
-        const items: ClothingItem[] = existingItems ? JSON.parse(existingItems) : []
-
-        // Add new item
-        items.push(newItem)
-        localStorage.setItem("clothingItems", JSON.stringify(items))
-
-        toast({
-          title: "Added to Wardrobe!",
-          description: `${outfit.title} added as "${aiCategory}" using AI classification`,
-        })
-
-        setClassifyingId(null)
+      if (!downloadResponse.ok) {
+        throw new Error("Failed to download image")
       }
 
-      reader.readAsDataURL(blob)
-    } catch (error) {
-      console.error("Error adding to wardrobe:", error)
-      setClassifyingId(null)
+      const downloadData = await downloadResponse.json()
+      const imageUrl = getImageUrl(downloadData.url)
 
-      // Fallback: Add with just the URL and default category
+      // Create a clothing item with AI-determined category
       const newItem: ClothingItem = {
         id: `trending-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-        imageUrl: outfit.imageUrl,
-        category: outfit.category === "outfit" ? "top" : outfit.category,
+        image: imageUrl,
+        imageUrl: imageUrl,
+        category: aiCategory, // Use AI classification instead of hardcoded
         name: outfit.title,
         brand: outfit.source
       }
 
+      // Get existing items from localStorage
       const existingItems = localStorage.getItem("clothingItems")
       const items: ClothingItem[] = existingItems ? JSON.parse(existingItems) : []
+
+      // Add new item
       items.push(newItem)
       localStorage.setItem("clothingItems", JSON.stringify(items))
 
       toast({
         title: "Added to Wardrobe!",
-        description: `${outfit.title} has been added (classification failed, using fallback)`,
-        variant: "default"
+        description: `${outfit.title} added as "${aiCategory}" using AI classification`,
       })
+
+      setClassifyingId(null)
+    } catch (error) {
+      setClassifyingId(null)
+
+      // Fallback: Try to download image and add with default category
+      try {
+        const downloadResponse = await fetch(`${API_BASE_URL}/api/trending/download-image`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl: outfit.imageUrl })
+        })
+
+        if (downloadResponse.ok) {
+          const downloadData = await downloadResponse.json()
+          const imageUrl = getImageUrl(downloadData.url)
+          const newItem: ClothingItem = {
+            id: `trending-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+            image: imageUrl,
+            imageUrl: imageUrl,
+            category: outfit.category === "outfit" ? "full-outfit" : outfit.category,
+            name: outfit.title,
+            brand: outfit.source
+          }
+
+          const existingItems = localStorage.getItem("clothingItems")
+          const items: ClothingItem[] = existingItems ? JSON.parse(existingItems) : []
+          items.push(newItem)
+          localStorage.setItem("clothingItems", JSON.stringify(items))
+
+          toast({
+            title: "Added to Wardrobe!",
+            description: `${outfit.title} has been added (using fallback category)`,
+          })
+        } else {
+          throw new Error("Download failed")
+        }
+      } catch (fallbackError) {
+        toast({
+          title: "Error",
+          description: "Failed to add outfit to wardrobe. Please try again.",
+          variant: "destructive"
+        })
+      }
     }
   }
 
@@ -202,18 +232,18 @@ export function TrendingOutfits() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 mb-6">
+      <div className="flex-shrink-0 pb-6 border-b">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight">Trending Outfits</h2>
-              <p className="text-sm text-muted-foreground">
-                Discover the latest men's streetwear from Pinterest
-              </p>
-            </div>
+          {/* Source Selection */}
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-muted-foreground">Source:</span>
+            <Tabs value={source} onValueChange={(v) => setSource(v as "pinterest" | "hollister" | "hm")}>
+              <TabsList className="h-9">
+                <TabsTrigger value="pinterest" className="text-xs px-4">Pinterest</TabsTrigger>
+                <TabsTrigger value="hollister" className="text-xs px-4">Hollister</TabsTrigger>
+                <TabsTrigger value="hm" className="text-xs px-4">H&M</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
 
           <Button
@@ -227,31 +257,14 @@ export function TrendingOutfits() {
             Refresh
           </Button>
         </div>
-
-        {/* Filters */}
-        <div className="flex gap-4 items-center flex-wrap">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Category:</span>
-            <Tabs value={category} onValueChange={(v) => setCategory(v as any)}>
-              <TabsList className="h-9">
-                <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-                <TabsTrigger value="top" className="text-xs">Tops</TabsTrigger>
-                <TabsTrigger value="bottom" className="text-xs">Bottoms</TabsTrigger>
-                <TabsTrigger value="shoes" className="text-xs">Shoes</TabsTrigger>
-                <TabsTrigger value="outfit" className="text-xs">Outfits</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pt-6">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
               <p className="text-sm text-muted-foreground">Loading trending outfits...</p>
             </div>
           </div>
@@ -261,7 +274,7 @@ export function TrendingOutfits() {
               <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-semibold mb-2">No outfits found</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Try changing the filters or refresh the data
+                Try changing the source or refresh the data
               </p>
               <Button onClick={fetchTrendingOutfits} variant="outline" size="sm">
                 Retry
@@ -270,20 +283,20 @@ export function TrendingOutfits() {
           </div>
         ) : (
           <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 pb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5 pb-8">
               {outfits.map((outfit, index) => (
                 <Card
                   key={`${outfit.source}-${index}`}
-                  className="group cursor-pointer border-0 shadow-sm hover:shadow-xl transition-shadow duration-200 overflow-hidden rounded-2xl bg-card"
+                  className="group cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden rounded-xl bg-card"
                   onClick={() => window.open(outfit.link, "_blank")}
                 >
                   <CardContent className="p-0">
                     {/* Image */}
-                    <div className="relative aspect-[3/4] overflow-hidden bg-muted/30 rounded-t-2xl">
+                    <div className="relative aspect-[3/4] overflow-hidden bg-muted/30 rounded-t-xl">
                       <img
                         src={outfit.imageUrl}
                         alt={outfit.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         loading="lazy"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
@@ -293,17 +306,17 @@ export function TrendingOutfits() {
                         }}
                       />
                       
-                      {/* Subtle hover overlay with action button */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <div className="absolute bottom-3 right-3">
+                      {/* Hover overlay with action button */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute bottom-4 right-4">
                           {classifyingId === `${outfit.source}-${outfit.imageUrl}` ? (
                             <Button
                               size="sm"
                               disabled
-                              className="gap-1.5 shadow-lg bg-white/95 hover:bg-white text-black"
+                              className="gap-2 shadow-xl bg-white/95 hover:bg-white text-black font-medium"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              <Loader2 className="h-4 w-4 animate-spin" />
                               <span className="text-xs">Adding...</span>
                             </Button>
                           ) : (
@@ -313,9 +326,9 @@ export function TrendingOutfits() {
                                 e.stopPropagation()
                                 handleAddToWardrobe(outfit)
                               }}
-                              className="gap-1.5 shadow-lg bg-white/95 hover:bg-white text-black"
+                              className="gap-2 shadow-xl bg-white/95 hover:bg-white text-black font-medium"
                             >
-                              <Plus className="h-3.5 w-3.5" />
+                              <Plus className="h-4 w-4" />
                               <span className="text-xs">Add</span>
                             </Button>
                           )}
@@ -323,9 +336,9 @@ export function TrendingOutfits() {
                       </div>
                     </div>
 
-                    {/* Clean info section */}
-                    <div className="p-3">
-                      <h3 className="font-medium text-sm line-clamp-2 leading-snug text-foreground/90">
+                    {/* Info section */}
+                    <div className="p-4">
+                      <h3 className="font-medium text-sm line-clamp-2 leading-relaxed text-foreground/90">
                         {outfit.title}
                       </h3>
                     </div>

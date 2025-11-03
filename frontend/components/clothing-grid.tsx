@@ -15,6 +15,7 @@ interface ClothingGridProps {
     top?: ClothingItem
     bottom?: ClothingItem
     shoes?: ClothingItem
+    "full-outfit"?: ClothingItem
   }
   currentFilter?: string
 }

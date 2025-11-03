@@ -1,10 +1,5 @@
 import { Router } from 'express';
-import {
-  fetchPinterestTrends,
-  fetchHollisterTrends,
-  fetchHMTrends,
-  fetchAllTrends
-} from '../services/trendingScraper.js';
+import { scraperRegistry } from '../services/scraperRegistry.js';
 import { getCategoryFromUrl } from '../services/geminiService.js';
 
 const router = Router();
@@ -37,86 +32,78 @@ router.get('/', async (req, res) => {
       maxResults = 20
     } = req.query;
 
-    console.log('🔍 Trending API called:');
+    console.log('\n📥 [GET /api/trending] Request received');
     console.log('   Source:', source);
     console.log('   Category:', category || 'all');
     console.log('   Max Results:', maxResults);
 
-    let results = [];
-
     // Validate and parse maxResults
     const limit = Math.min(Math.max(parseInt(maxResults) || 20, 1), 50);
 
-    // Fetch based on source parameter
-    switch (source.toLowerCase()) {
-      case 'pinterest':
-        try {
-          // Don't pass keyword - let it use the default URL from the function
-          results = await fetchPinterestTrends(undefined, limit);
-        } catch (error) {
-          console.error('Pinterest fetch failed:', error.message);
-          results = [];
-        }
-        break;
+    // PRIORITY: Always return cached data first (fast response)
+    console.log('📦 Loading cached data...');
+    let results = [];
+    let fromCache = true;
 
-      case 'hollister':
-        results = await fetchHollisterTrends(limit);
-        break;
-
-      case 'hm':
-      case 'h&m':
-        results = await fetchHMTrends(limit);
-        break;
-
-      case 'all':
-        const allResults = await fetchAllTrends({ maxResults: limit });
-        // Combine all results into a single array
+    try {
+      if (source.toLowerCase() === 'all') {
+        const cachedResults = await scraperRegistry.getAllCached();
         results = [
-          ...allResults.pinterest,
-          ...allResults.hollister,
-          ...allResults.hm
+          ...(cachedResults.pinterest || []),
+          ...(cachedResults.hollister || []),
+          ...(cachedResults.hm || [])
         ];
-        break;
+        console.log(`   📊 Cache stats: Pinterest(${cachedResults.pinterest?.length || 0}), Hollister(${cachedResults.hollister?.length || 0}), H&M(${cachedResults.hm?.length || 0})`);
+      } else {
+        results = await scraperRegistry.getCached(source.toLowerCase());
+        console.log(`   📊 Cached items for ${source}: ${results.length}`);
+      }
 
-      default:
-        return res.status(400).json({
-          error: 'Invalid source parameter',
-          validSources: ['pinterest', 'hollister', 'hm', 'all']
-        });
+      // Filter cached results by category if needed
+      if (category && results.length > 0) {
+        const categoryLower = category.toLowerCase();
+        const beforeFilter = results.length;
+        results = results.filter(item =>
+          item && item.category && item.category.toLowerCase() === categoryLower
+        );
+        console.log(`   🔍 Category filter "${category}": ${beforeFilter} → ${results.length} items`);
+      }
+
+      // Limit results
+      results = results.slice(0, limit);
+
+      console.log(`✅ [GET] Returning ${results.length} cached outfits (fromCache: true)`);
+      console.log('─────────────────────────────────────────────\n');
+
+      return res.status(200).json({
+        success: true,
+        count: results.length,
+        source: source,
+        category: category || 'all',
+        timestamp: new Date().toISOString(),
+        fromCache: true,
+        data: results
+      });
+
+    } catch (cacheError) {
+      console.log('⚠️  Cache unavailable:', cacheError.message);
+      console.log('   Will return empty results (use /refresh to scrape)\n');
+      
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        source: source,
+        category: category || 'all',
+        timestamp: new Date().toISOString(),
+        fromCache: false,
+        data: [],
+        message: 'No cached data available. Click refresh to scrape new data.'
+      });
     }
-
-    // Ensure results is an array
-    if (!Array.isArray(results)) {
-      console.warn('⚠️  Results is not an array, defaulting to empty array');
-      results = [];
-    }
-
-    // Filter by category if specified
-    if (category) {
-      const categoryLower = category.toLowerCase();
-      results = results.filter(item =>
-        item && item.category && item.category.toLowerCase() === categoryLower
-      );
-      console.log(`🔍 Filtered to ${results.length} items in category: ${category}`);
-    }
-
-    // Add metadata to response
-    const response = {
-      success: true,
-      count: results.length,
-      source: source,
-      category: category || 'all',
-      timestamp: new Date().toISOString(),
-      data: results
-    };
-
-    console.log(`✅ Returning ${results.length} trending outfits`);
-
-    res.status(200).json(response);
 
   } catch (error) {
-    console.error('❌ Trending API error:', error.message);
-    console.error('Full error:', error);
+    console.error('❌ [GET /api/trending] Error:', error.message);
+    console.error('─────────────────────────────────────────────\n');
 
     res.status(500).json({
       success: false,
@@ -145,56 +132,86 @@ router.post('/refresh', async (req, res) => {
   try {
     const { source = 'all', maxResults = 20 } = req.body;
 
-    console.log('🔄 Manual cache refresh requested:');
+    console.log('\n🔄 [POST /api/trending/refresh] Manual refresh requested');
     console.log('   Source:', source);
     console.log('   Max Results:', maxResults);
+    console.log('   Starting fresh scrape (this may take 30-90 seconds)...\n');
 
     const limit = Math.min(Math.max(parseInt(maxResults) || 20, 1), 50);
     let itemsRefreshed = 0;
+    const startTime = Date.now();
 
-    switch (source.toLowerCase()) {
-      case 'pinterest':
-        const pinterestResults = await fetchPinterestTrends(undefined, limit);
-        itemsRefreshed = pinterestResults.length;
-        break;
+    try {
+      if (source.toLowerCase() === 'all') {
+        console.log('📡 Scraping from all sources...');
+        console.log('   └─ Pinterest...');
+        const pinterestStart = Date.now();
+        const pinterestResults = await scraperRegistry.scrape('pinterest', { maxResults: limit });
+        console.log(`   └─ ✅ Pinterest: ${pinterestResults.length} items (${((Date.now() - pinterestStart) / 1000).toFixed(1)}s)`);
 
-      case 'hollister':
-        const hollisterResults = await fetchHollisterTrends(limit);
-        itemsRefreshed = hollisterResults.length;
-        break;
+        console.log('   └─ Hollister...');
+        const hollisterStart = Date.now();
+        const hollisterResults = await scraperRegistry.scrape('hollister', { maxResults: limit });
+        console.log(`   └─ ✅ Hollister: ${hollisterResults.length} items (${((Date.now() - hollisterStart) / 1000).toFixed(1)}s)`);
 
-      case 'hm':
-      case 'h&m':
-        const hmResults = await fetchHMTrends(limit);
-        itemsRefreshed = hmResults.length;
-        break;
+        console.log('   └─ H&M...');
+        const hmStart = Date.now();
+        const hmResults = await scraperRegistry.scrape('hm', { maxResults: limit });
+        console.log(`   └─ ✅ H&M: ${hmResults.length} items (${((Date.now() - hmStart) / 1000).toFixed(1)}s)`);
 
-      case 'all':
-        const allResults = await fetchAllTrends({ maxResults: limit });
-        itemsRefreshed = allResults.pinterest.length +
-                        allResults.hollister.length +
-                        allResults.hm.length;
-        break;
+        itemsRefreshed = (pinterestResults?.length || 0) +
+                        (hollisterResults?.length || 0) +
+                        (hmResults?.length || 0);
+      } else {
+        const sourceName = source.toLowerCase();
+        if (!scraperRegistry.has(sourceName)) {
+          console.error(`❌ Invalid source: ${sourceName}`);
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid source parameter',
+            validSources: scraperRegistry.getNames()
+          });
+        }
 
-      default:
-        return res.status(400).json({
-          error: 'Invalid source parameter',
-          validSources: ['pinterest', 'hollister', 'hm', 'all']
-        });
+        console.log(`📡 Scraping from ${sourceName}...`);
+        const scrapeStart = Date.now();
+        const results = await scraperRegistry.scrape(sourceName, { maxResults: limit });
+        const scrapeTime = ((Date.now() - scrapeStart) / 1000).toFixed(1);
+        console.log(`✅ ${sourceName}: ${results.length} items scraped (${scrapeTime}s)`);
+        itemsRefreshed = results.length;
+      }
+
+      const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`\n✅ [POST /refresh] Cache refreshed successfully!`);
+      console.log(`   Total items: ${itemsRefreshed}`);
+      console.log(`   Total time: ${totalTime}s`);
+      console.log('─────────────────────────────────────────────\n');
+
+      res.status(200).json({
+        success: true,
+        message: 'Cache refreshed successfully',
+        source,
+        itemsRefreshed,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.error(`\n❌ [POST /refresh] Scraping failed after ${totalTime}s`);
+      console.error('   Error:', error.message);
+      console.error('─────────────────────────────────────────────\n');
+
+      res.status(500).json({
+        success: false,
+        error: 'Failed to refresh cache',
+        message: error.message,
+        timestamp: new Date().toISOString()
+      });
     }
 
-    console.log(`✅ Cache refreshed: ${itemsRefreshed} items`);
-
-    res.status(200).json({
-      success: true,
-      message: 'Cache refreshed successfully',
-      source,
-      itemsRefreshed,
-      timestamp: new Date().toISOString()
-    });
-
   } catch (error) {
-    console.error('❌ Cache refresh error:', error.message);
+    console.error('\n❌ [POST /refresh] Unexpected error:', error.message);
+    console.error('─────────────────────────────────────────────\n');
 
     res.status(500).json({
       success: false,
@@ -233,11 +250,24 @@ router.post('/classify-image', async (req, res) => {
 
     const category = await getCategoryFromUrl(imageUrl);
 
-    console.log(`✅ Image classified as: ${category}`);
+    // Map backend category format to frontend format
+    const categoryMap = {
+      'upper_body': 'top',
+      'lower_body': 'bottom',
+      'full_outfit': 'full-outfit',
+      'full-outfit': 'full-outfit', // Also handle already mapped
+      'shoes': 'shoes',
+      'top': 'top', // Handle if already in frontend format
+      'bottom': 'bottom'
+    };
+
+    const frontendCategory = categoryMap[category] || category;
+
+    console.log(`✅ Image classified as: ${category} -> ${frontendCategory}`);
 
     res.status(200).json({
       success: true,
-      category,
+      category: frontendCategory,
       imageUrl,
       timestamp: new Date().toISOString()
     });
@@ -248,6 +278,84 @@ router.post('/classify-image', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to classify image',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * POST /api/trending/download-image
+ * Download and proxy an image from external URL (bypasses CORS)
+ * Body parameters:
+ * - imageUrl: string (required) - The URL of the image to download
+ *
+ * Response:
+ * {
+ *   "success": true,
+ *   "dataUrl": "data:image/jpeg;base64,...",
+ *   "imageUrl": "https://..."
+ * }
+ */
+router.post('/download-image', async (req, res) => {
+  try {
+    const { imageUrl } = req.body;
+
+    if (!imageUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'imageUrl is required in request body'
+      });
+    }
+
+    console.log('📥 Downloading image:', imageUrl);
+
+    // Fetch the image using axios (backend doesn't have CORS restrictions)
+    const axios = (await import('axios')).default;
+    const fs = await import('fs');
+    const path = await import('path');
+    const { fileURLToPath } = await import('url');
+    
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    
+    const response = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      },
+      timeout: 30000
+    });
+
+    // Determine content type and extension
+    const contentType = response.headers['content-type'] || 'image/jpeg';
+    const ext = contentType.includes('png') ? '.png' : contentType.includes('webp') ? '.webp' : '.jpeg';
+    
+    // Save to uploads directory
+    const uploadsDir = path.join(__dirname, '../../../frontend/public/uploads');
+    const filename = `trending-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
+    const filepath = path.join(uploadsDir, filename);
+    
+    // Write file
+    fs.writeFileSync(filepath, Buffer.from(response.data));
+    
+    const url = `/uploads/${filename}`;
+    console.log('✅ Image downloaded and saved:', url);
+
+    res.status(200).json({
+      success: true,
+      url,
+      imageUrl,
+      contentType,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Image download error:', error.message);
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to download image',
       message: error.message,
       timestamp: new Date().toISOString()
     });
@@ -286,11 +394,15 @@ router.get('/stats', async (req, res) => {
       };
     }
 
+    // Also include registry info
+    const availableSources = scraperRegistry.getNames();
+
     console.log('📊 Cache stats requested');
 
     res.status(200).json({
       success: true,
       stats,
+      availableSources,
       timestamp: new Date().toISOString()
     });
 
@@ -300,6 +412,7 @@ router.get('/stats', async (req, res) => {
     res.status(200).json({
       success: true,
       stats: {},
+      availableSources: scraperRegistry.getNames(),
       message: 'No cache data available yet',
       timestamp: new Date().toISOString()
     });

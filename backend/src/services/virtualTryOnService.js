@@ -33,6 +33,9 @@ export const generateVirtualTryOn = async (modelUrl, clothingItems) => {
 
     // Helper to check if URL is external
     const isExternalUrl = (url) => url.startsWith('http://') || url.startsWith('https://');
+    
+    // Helper to check if it's a base64 data URL
+    const isBase64DataUrl = (url) => url.startsWith('data:image/');
 
     // Validate model URL is not external
     if (isExternalUrl(modelUrl)) {
@@ -51,17 +54,33 @@ export const generateVirtualTryOn = async (modelUrl, clothingItems) => {
 
     // Check if we have a full outfit
     if (clothingItems.full_outfit && !isExternalUrl(clothingItems.full_outfit)) {
-      const fullOutfitPath = path.join(uploadsDir, clothingItems.full_outfit);
-      if (fs.existsSync(fullOutfitPath)) {
-        const imageData = fs.readFileSync(fullOutfitPath);
-        const base64Image = imageData.toString('base64');
+      if (isBase64DataUrl(clothingItems.full_outfit)) {
+        // Handle base64 data URL directly
+        const base64Data = clothingItems.full_outfit.split(',')[1];
+        const mimeMatch = clothingItems.full_outfit.match(/data:(image\/[^;]+);/);
+        const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+        
         parts.push({
           inline_data: {
-            mime_type: getMimeType(fullOutfitPath),
-            data: base64Image,
+            mime_type: mimeType,
+            data: base64Data,
           },
         });
         clothingDescriptions.push('the complete outfit from the first image');
+      } else {
+        // Handle file path
+        const fullOutfitPath = path.join(uploadsDir, clothingItems.full_outfit);
+        if (fs.existsSync(fullOutfitPath)) {
+          const imageData = fs.readFileSync(fullOutfitPath);
+          const base64Image = imageData.toString('base64');
+          parts.push({
+            inline_data: {
+              mime_type: getMimeType(fullOutfitPath),
+              data: base64Image,
+            },
+          });
+          clothingDescriptions.push('the complete outfit from the first image');
+        }
       }
     } else {
       // Add individual clothing items (skip external URLs)
