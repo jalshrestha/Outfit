@@ -134,13 +134,18 @@ export const generateVirtualTryOn = async (modelUrl, clothingItems) => {
 
     // Check if we have any clothing items to try on
     if (parts.length === 0) {
-      throw new Error('No valid clothing items found. Please upload clothing items to your wardrobe first.');
+      console.error('❌ No valid clothing items found');
+      console.error('Clothing items received:', clothingItems);
+      throw new Error('No valid clothing items found. Please upload clothing items to your wardrobe first. Note: External URLs from scraped images must be downloaded locally first.');
     }
+    
+    console.log(`✅ Successfully loaded ${parts.length} images for virtual try-on`);
 
     // Add the model image last
     const modelImageData = fs.readFileSync(modelPath);
     const base64ModelImage = modelImageData.toString('base64');
     const imageCount = parts.filter(p => p.inline_data).length;
+    const modelImageNumber = imageCount + 1; // Model image will be added next
     const modelImageOrdinal = imageCount === 0 ? 'first' : imageCount === 1 ? 'second' : imageCount === 2 ? 'third' : 'last';
 
     parts.push({
@@ -153,9 +158,46 @@ export const generateVirtualTryOn = async (modelUrl, clothingItems) => {
     // Create the text prompt based on whether it's a full outfit or individual items
     let textPrompt;
     if (clothingItems.full_outfit) {
-      textPrompt = `Create a professional e-commerce fashion photo. From the first image, extract and identify the complete outfit (all clothing items worn by the person). Then, take these exact same clothing items and fit them onto the person from the ${modelImageOrdinal} image. The result should show the person from the ${modelImageOrdinal} image wearing the complete outfit from the first image. Keep the model person's pose, face, body, and background exactly as in their original photo. Transfer only the clothing items - make them fit naturally with proper sizing, lighting, shadows, and realistic fabric textures. Ensure the outfit looks cohesive and professionally fitted.`;
+      textPrompt = `TASK: Virtual Clothing Transfer - Extract clothing from person A and apply to person B
+
+IMAGE 1: A person wearing clothing. IGNORE the person completely. Only look at:
+- The shirt/top (color, pattern, style, texture)
+- The pants/bottoms (color, pattern, style, texture)  
+- The shoes (color, style, design)
+- DO NOT look at: face, body, skin, pose, background
+
+IMAGE ${modelImageNumber}: The target model person. This person will wear the clothing.
+
+INSTRUCTIONS:
+1. Analyze Image 1 and extract ONLY the clothing design (what the clothes look like)
+2. Take Image ${modelImageNumber} as your base - keep this person exactly as they are (face, body, pose, background)
+3. Draw/render the clothing from Image 1 onto the person in Image ${modelImageNumber}
+4. Make the clothing fit the model's body naturally
+5. Match lighting and shadows to Image ${modelImageNumber}
+
+CRITICAL: 
+- The final image must show ONLY the person from Image ${modelImageNumber}
+- The clothing must come from Image 1 but be rendered onto Image ${modelImageNumber}'s person
+- NO merging of two people
+- NO overlaying faces or bodies
+- ONE person wearing clothes from Image 1
+
+Generate a photo of the model from Image ${modelImageNumber} wearing the clothing from Image 1.`;
     } else {
-      textPrompt = `Create a professional e-commerce fashion photo. Take ${clothingDescriptions.join(', ')} and let the person from the ${modelImageOrdinal} image wear them. Generate a realistic, full-body shot of the person wearing all the selected clothing items together. The person's pose, face, and body should remain exactly the same as in the original photo. Make the clothes fit naturally on their body with proper lighting, shadows, and realistic fabric textures. Ensure the outfit looks cohesive and professional.`;
+      textPrompt = `=== VIRTUAL CLOTHING TRY-ON TASK ===
+
+CLOTHING ITEMS: ${clothingDescriptions.join(', ')}.
+MODEL: The ${modelImageOrdinal} image contains the person who will wear these clothes.
+
+INSTRUCTIONS:
+1. Analyze each clothing item's design, color, pattern, and style
+2. Take the model person from the ${modelImageOrdinal} image (keep their face, body, pose, background exactly the same)
+3. Virtually dress them with the clothing items from the previous images
+4. Make the clothing fit naturally with realistic fabric texture, wrinkles, shadows, and proper sizing
+5. Match lighting to the model's environment
+6. Ensure all clothing items coordinate as a cohesive outfit
+
+OUTPUT: A realistic fashion photo showing the model person wearing the selected clothing items. The model's appearance, pose, and background remain unchanged from the original ${modelImageOrdinal} image.`;
     }
 
     // Add text prompt as the last part
@@ -163,6 +205,11 @@ export const generateVirtualTryOn = async (modelUrl, clothingItems) => {
 
     console.log('📤 Sending request to Gemini...');
     console.log('Number of images:', parts.filter(p => p.inline_data).length);
+    console.log('Image order:', parts.filter(p => p.inline_data).map((p, i) => {
+      if (i === 0 && clothingItems.full_outfit) return `Image ${i+1}: Full outfit (clothing source)`;
+      if (i === parts.filter(p => p.inline_data).length - 1) return `Image ${i+1}: Model person`;
+      return `Image ${i+1}: Clothing item`;
+    }));
     console.log('Text prompt:', textPrompt);
 
     // Build request body
