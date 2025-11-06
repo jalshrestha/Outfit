@@ -8,7 +8,7 @@ const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/
 
 /**
  * Hollister Scraper
- * Scrapes trending outfits from Hollister using Axios + Cheerio
+ * Scrapes trending outfits from Hollister using Axios + Cheerio (like H&M)
  */
 export class HollisterScraper extends BaseScraper {
   constructor() {
@@ -28,7 +28,7 @@ export class HollisterScraper extends BaseScraper {
       console.log(`\n🔍 [Hollister] Starting scraper...`);
       console.log(`   Max Results: ${maxResults}`);
 
-      const url = 'https://www.hollisterco.com/shop/us/mens-new-arrivals';
+      const url = 'https://www.hollisterco.com/shop/us/mens-licensed-collection';
       console.log('🌐 [Hollister] Fetching:', url);
 
       const response = await axios.get(url, {
@@ -46,19 +46,22 @@ export class HollisterScraper extends BaseScraper {
       const $ = cheerio.load(response.data);
       const outfits = [];
 
+      // Try multiple selectors
       const selectors = [
         '.product-tile',
         '.product-card',
-        '[data-product-tile]',
-        '.product-item',
-        'article.product'
+        'article.product',
+        '[data-product-id]',
+        '.productCard',
+        'li[class*="product"]',
+        'div[class*="product"]'
       ];
 
       let productElements = null;
       for (const selector of selectors) {
         productElements = $(selector);
         if (productElements.length > 0) {
-          console.log(`✅ [Hollister] Found ${productElements.length} products`);
+          console.log(`✅ [Hollister] Found ${productElements.length} products with selector: ${selector}`);
           break;
         }
       }
@@ -71,12 +74,14 @@ export class HollisterScraper extends BaseScraper {
         try {
           const $el = $(element);
 
-          const title = $el.find('.product-name, .product-title, h3, h2').first().text().trim()
+          // Extract title
+          const title = $el.find('.product-name, .product-title, h2, h3').first().text().trim()
             || $el.find('img').attr('alt')
-            || `Hollister Item ${i + 1}`;
+            || `Hollister Product ${i + 1}`;
 
+          // Extract image
           const img = $el.find('img').first();
-          let imageUrl = img.attr('src') || img.attr('data-src') || img.attr('data-original');
+          let imageUrl = img.attr('src') || img.attr('data-src') || img.attr('data-original') || img.attr('data-lazy-src');
 
           if (imageUrl && !imageUrl.startsWith('http')) {
             imageUrl = imageUrl.startsWith('//')
@@ -84,27 +89,38 @@ export class HollisterScraper extends BaseScraper {
               : `https://www.hollisterco.com${imageUrl}`;
           }
 
-          const priceText = $el.find('.price, .product-price, [class*="price"]').first().text().trim();
-          const price = priceText || 'Check site';
+          // Upgrade to high-res for Hollister CDN
+          if (imageUrl && imageUrl.includes('hollisterco.com')) {
+            imageUrl = imageUrl.replace(/\?.*$/, '?wid=800&hei=1000&fit=crop');
+          }
 
+          // Extract price
+          const priceText = $el.find('.price, .product-price, [class*="price"]').first().text().trim();
+          const price = priceText || null;
+
+          // Extract link
           const link = $el.find('a').first().attr('href');
           const productUrl = link
             ? (link.startsWith('http') ? link : `https://www.hollisterco.com${link}`)
             : url;
 
+          // Determine category
           let category = 'outfit';
           const titleLower = title.toLowerCase();
-          if (titleLower.includes('shirt') || titleLower.includes('tee') || titleLower.includes('hoodie') || titleLower.includes('jacket')) {
+          if (titleLower.includes('shirt') || titleLower.includes('tee') || titleLower.includes('t-shirt') ||
+              titleLower.includes('hoodie') || titleLower.includes('jacket') || titleLower.includes('sweater') ||
+              titleLower.includes('top') || titleLower.includes('polo')) {
             category = 'top';
-          } else if (titleLower.includes('jean') || titleLower.includes('pant') || titleLower.includes('short')) {
+          } else if (titleLower.includes('jean') || titleLower.includes('pant') || titleLower.includes('short') ||
+                     titleLower.includes('jogger') || titleLower.includes('chino')) {
             category = 'bottom';
           } else if (titleLower.includes('shoe') || titleLower.includes('sneaker') || titleLower.includes('boot')) {
             category = 'shoes';
           }
 
-          if (imageUrl && !imageUrl.includes('placeholder')) {
+          if (imageUrl && !imageUrl.includes('placeholder') && !imageUrl.includes('Flyout') && !imageUrl.includes('Nav-')) {
             outfits.push({
-              title,
+              title: title.substring(0, 150),
               imageUrl,
               price,
               category,
@@ -147,4 +163,3 @@ export class HollisterScraper extends BaseScraper {
     return await saveToCache('hollister', data);
   }
 }
-
