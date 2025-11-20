@@ -5,8 +5,7 @@ import { LeftPanel } from "@/components/left-panel"
 import { RightPanel } from "@/components/right-panel"
 import { OutfitHistory } from "@/components/outfit-history"
 import { TrendingOutfits } from "@/components/trending-outfits"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Shirt, History, TrendingUp } from "lucide-react"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
 import type { ClothingItem } from "@/types"
 
 export function MainLayout() {
@@ -22,6 +21,8 @@ export function MainLayout() {
   const [currentModelIndex, setCurrentModelIndex] = useState(0)
   const modelImage = modelImages[currentModelIndex] || ''
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0)
+  const [savedLooks, setSavedLooks] = useState(0)
+  const [activeTab, setActiveTab] = useState("wardrobe")
 
   useEffect(() => {
     // Load clothing items from localStorage
@@ -118,59 +119,104 @@ export function MainLayout() {
   const handleOutfitSaved = () => {
     // Trigger history refresh
     setHistoryRefreshKey(prev => prev + 1)
+    try {
+      const saved = localStorage.getItem("savedOutfits")
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        setSavedLooks(parsed.length)
+      }
+    } catch {
+      // ignore storage errors
+    }
   }
 
+  useEffect(() => {
+    const handleNavigation = (event: Event) => {
+      const customEvent = event as CustomEvent<string>
+      if (customEvent.detail) {
+        setActiveTab(customEvent.detail)
+      }
+    }
+
+    window.addEventListener("outfit:navigate", handleNavigation as EventListener)
+    return () => window.removeEventListener("outfit:navigate", handleNavigation as EventListener)
+  }, [])
+
+  useEffect(() => {
+    const targetId = activeTab === "wardrobe" ? "studio" : `section-${activeTab}`
+    const target = document.getElementById(targetId)
+    target?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [activeTab])
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("savedOutfits")
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        setSavedLooks(parsed.length)
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [])
+
   return (
-    <main className="h-[calc(100vh-80px)] overflow-hidden">
-      <Tabs defaultValue="wardrobe" className="h-full flex flex-col">
-        <div className="flex-shrink-0 border-b border-border px-4">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3">
-            <TabsTrigger value="wardrobe" className="gap-2">
-              <Shirt className="h-4 w-4" />
-              Wardrobe & Try-On
-            </TabsTrigger>
-            <TabsTrigger value="trending" className="gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Trending Outfits
-            </TabsTrigger>
-            <TabsTrigger value="history" className="gap-2">
-              <History className="h-4 w-4" />
-              Outfit History
-            </TabsTrigger>
-          </TabsList>
+    <main id="studio" className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col pb-8">
+      <div className="mb-6 flex flex-col gap-3 text-[var(--shell-foreground)]/80 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.4em] text-[var(--shell-foreground)]/50">Couture Engine</p>
+          <h2 className="text-3xl font-semibold text-[var(--shell-foreground)]">Wardrobe Composer & Virtual Try-On</h2>
         </div>
-
-        <TabsContent value="wardrobe" className="flex-1 overflow-hidden m-0 p-4">
-          <div className="grid h-full gap-4" style={{ gridTemplateColumns: "60% 40%" }}>
-            <LeftPanel
-              clothingItems={clothingItems}
-              onAddClothing={handleAddClothing}
-              onSelectItem={handleSelectItem}
-              onDeleteItem={handleDeleteItem}
-              selectedItems={selectedItems}
-            />
-            <RightPanel
-              selectedItems={selectedItems}
-              modelImage={modelImage}
-              onModelImageChange={handleModelImageChange}
-              onNextModel={handleNextModel}
-              onPrevModel={handlePrevModel}
-              onDeleteModel={handleDeleteModel}
-              modelCount={modelImages.length}
-              currentModelIndex={currentModelIndex}
-              onOutfitSaved={handleOutfitSaved}
-            />
+        <div className="flex items-center gap-6 text-xs uppercase tracking-[0.3em] text-[var(--shell-foreground)]/60">
+          <div>
+            <p className="text-[11px] text-[var(--shell-foreground)]/50">Model slots</p>
+            <p className="text-base text-[var(--shell-foreground)]">{modelImages.length || 0}/10</p>
           </div>
-        </TabsContent>
+          <div>
+            <p className="text-[11px] text-[var(--shell-foreground)]/50">Looks saved</p>
+            <p className="text-base text-[var(--shell-foreground)]">{savedLooks}</p>
+          </div>
+        </div>
+      </div>
+      <div className="relative flex-1">
+        <div className="pointer-events-none absolute inset-0 rounded-[32px] border border-[var(--frame-border)] bg-gradient-to-br from-white/20 via-white/5 to-transparent opacity-40 dark:from-white/10 dark:via-white/5" />
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="relative z-10 flex h-[calc(100vh-220px)] flex-col rounded-[32px] border border-[var(--frame-border)] bg-[var(--frame-surface)] shadow-[var(--frame-shadow)] backdrop-blur-3xl"
+        >
+          <TabsContent value="wardrobe" className="m-0 flex-1 overflow-hidden px-6 pb-6 pt-6">
+            <div className="grid h-full gap-6 lg:grid-cols-[0.6fr_0.4fr]">
+              <LeftPanel
+                clothingItems={clothingItems}
+                onAddClothing={handleAddClothing}
+                onSelectItem={handleSelectItem}
+                onDeleteItem={handleDeleteItem}
+                selectedItems={selectedItems}
+              />
+              <RightPanel
+                selectedItems={selectedItems}
+                modelImage={modelImage}
+                onModelImageChange={handleModelImageChange}
+                onNextModel={handleNextModel}
+                onPrevModel={handlePrevModel}
+                onDeleteModel={handleDeleteModel}
+                modelCount={modelImages.length}
+                currentModelIndex={currentModelIndex}
+                onOutfitSaved={handleOutfitSaved}
+              />
+            </div>
+          </TabsContent>
 
-        <TabsContent value="trending" className="flex-1 m-0 p-4 overflow-hidden">
-          <TrendingOutfits />
-        </TabsContent>
+          <TabsContent value="trending" id="section-trending" className="m-0 flex-1 overflow-hidden px-6 pb-6 pt-6">
+            <TrendingOutfits />
+          </TabsContent>
 
-        <TabsContent value="history" className="flex-1 m-0 p-4 overflow-hidden flex flex-col">
-          <OutfitHistory key={historyRefreshKey} onRefresh={() => setHistoryRefreshKey(prev => prev + 1)} />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="history" id="section-history" className="m-0 flex-1 overflow-hidden px-6 pb-6 pt-6">
+            <OutfitHistory key={historyRefreshKey} onRefresh={() => setHistoryRefreshKey(prev => prev + 1)} />
+          </TabsContent>
+        </Tabs>
+      </div>
     </main>
   )
 }

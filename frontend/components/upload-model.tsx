@@ -51,7 +51,12 @@ export function UploadModel({ onModelImageChange }: UploadModelProps) {
   return (
     <div {...getRootProps()}>
       <input {...getInputProps()} />
-      <Button type="button" variant="default" className="w-full py-6" disabled={isUploading}>
+      <Button
+        type="button"
+        variant="default"
+        className="w-full"
+        disabled={isUploading}
+      >
         {isUploading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

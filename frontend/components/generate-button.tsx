@@ -27,7 +27,7 @@ export function GenerateButton({ onGenerate, disabled }: GenerateButtonProps) {
       <Button
         onClick={handleClick}
         disabled={disabled || isGenerating}
-        className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+        className="w-full"
         size="lg"
       >
         {isGenerating ? (

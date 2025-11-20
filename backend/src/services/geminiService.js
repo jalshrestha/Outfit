@@ -25,9 +25,20 @@ export const getCategoryFromGemini = async (localPath) => {
     throw new Error(`Image file not found: ${fullPath}`);
   }
 
-  const mimeType = getMimeType(fullPath);
-  const imageData = fs.readFileSync(fullPath);
-  const base64Image = imageData.toString('base64');
+  let mimeType = getMimeType(fullPath);
+  let imageData = fs.readFileSync(fullPath);
+  let base64Image;
+
+  // Gemini doesn't support AVIF - convert to JPEG
+  if (mimeType === 'image/avif') {
+    console.log('🔄 Converting AVIF to JPEG for Gemini compatibility...');
+    const sharp = (await import('sharp')).default;
+    imageData = await sharp(imageData).jpeg({ quality: 90 }).toBuffer();
+    mimeType = 'image/jpeg';
+    console.log('✅ Converted AVIF to JPEG');
+  }
+
+  base64Image = imageData.toString('base64');
 
   const requestBody = {
     contents: [
@@ -101,22 +112,60 @@ export const getCategoryFromUrl = async (imageUrl) => {
 
   console.log('🔍 Classifying image from URL:', imageUrl);
 
-  // Fetch the image from the URL
-  const imageResponse = await fetch(imageUrl);
+  let base64Image;
+  let mimeType;
 
-  if (!imageResponse.ok) {
-    throw new Error(`Failed to fetch image: ${imageResponse.status} ${imageResponse.statusText}`);
-  }
+  // Check if this is a local file path (already scraped/cached)
+  const isLocalPath = imageUrl.startsWith('/uploads/');
 
-  const imageBuffer = await imageResponse.arrayBuffer();
-  const base64Image = Buffer.from(imageBuffer).toString('base64');
+  if (isLocalPath) {
+    // Read from local file system
+    const fs = await import('fs');
+    const path = await import('path');
+    const { fileURLToPath } = await import('url');
+    const { getMimeType } = await import('../utils/mimeTypes.js');
 
-  // Determine MIME type from content-type header
-  let mimeType = imageResponse.headers.get('content-type') || 'image/jpeg';
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const imagePath = path.join(__dirname, '../../../frontend/public', imageUrl);
 
-  // Fallback to jpeg if content-type is not an image
-  if (!mimeType.startsWith('image/')) {
-    mimeType = 'image/jpeg';
+    console.log('📁 Reading local image:', imagePath);
+
+    if (!fs.existsSync(imagePath)) {
+      throw new Error(`Local file not found: ${imagePath}`);
+    }
+
+    let imageBuffer = fs.readFileSync(imagePath);
+    mimeType = getMimeType(imagePath);
+
+    // Gemini doesn't support AVIF - convert to JPEG
+    if (mimeType === 'image/avif') {
+      console.log('🔄 Converting AVIF to JPEG for Gemini compatibility...');
+      const sharp = (await import('sharp')).default;
+      imageBuffer = await sharp(imageBuffer).jpeg({ quality: 90 }).toBuffer();
+      mimeType = 'image/jpeg';
+      console.log('✅ Converted AVIF to JPEG');
+    }
+
+    base64Image = imageBuffer.toString('base64');
+  } else {
+    // Fetch the image from external URL
+    const imageResponse = await fetch(imageUrl);
+
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to fetch image: ${imageResponse.status} ${imageResponse.statusText}`);
+    }
+
+    const imageBuffer = await imageResponse.arrayBuffer();
+    base64Image = Buffer.from(imageBuffer).toString('base64');
+
+    // Determine MIME type from content-type header
+    mimeType = imageResponse.headers.get('content-type') || 'image/jpeg';
+
+    // Fallback to jpeg if content-type is not an image
+    if (!mimeType.startsWith('image/')) {
+      mimeType = 'image/jpeg';
+    }
   }
 
   const requestBody = {
