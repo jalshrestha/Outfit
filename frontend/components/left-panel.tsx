@@ -35,8 +35,8 @@ export function LeftPanel({ clothingItems, onAddClothing, onSelectItem, onDelete
       })
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] shadow-[var(--frame-shadow)]/2 backdrop-blur-2xl">
-      <div className="flex-shrink-0 border-b border-[var(--panel-divider)] p-5">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] shadow-[var(--frame-shadow)]/2 backdrop-blur-2xl">
+      <div className="flex-shrink-0 border-b border-[var(--panel-divider)] p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-[11px] uppercase tracking-[0.4em] text-[var(--shell-foreground)]/50">Wardrobe</p>
@@ -49,11 +49,11 @@ export function LeftPanel({ clothingItems, onAddClothing, onSelectItem, onDelete
         </div>
       </div>
 
-      <div className="flex-shrink-0 border-b border-[var(--panel-divider)] p-4">
+      <div className="flex-shrink-0 border-b border-[var(--panel-divider)] p-3">
         <Filters currentFilter={filter} onFilterChange={setFilter} />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5">
+      <div className="flex-1 overflow-y-auto p-4">
         <ClothingGrid items={filteredItems} onSelectItem={onSelectItem} onDeleteItem={onDeleteItem} selectedItems={selectedItems} currentFilter={filter} />
       </div>
     </div>
