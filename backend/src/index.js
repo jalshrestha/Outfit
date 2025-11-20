@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import apiRoutes from './api/routes.js';
-import { startTrendingCronJob, runInitialRefresh } from './services/trendingCronJob.js';
 
 // --- Basic Setup ---
 const __filename = fileURLToPath(import.meta.url);
@@ -40,14 +39,9 @@ app.use('/uploads', express.static(uploadsPath));
 // --- API Routes ---
 app.use('/api', apiRoutes);
 
-// --- Optional: Enable Trending Outfits Cron Job ---
-// Uncomment the lines below to enable automatic refresh of trending outfits every 12 hours
-// const ENABLE_TRENDING_CRON = process.env.ENABLE_TRENDING_CRON === 'true';
-// if (ENABLE_TRENDING_CRON) {
-//   startTrendingCronJob();
-//   // Optionally run initial refresh on startup
-//   // runInitialRefresh().catch(err => console.error('Initial refresh failed:', err));
-// }
+// --- Optional: Trending Outfits Cron Job ---
+// To enable automatic refresh every 12 hours, set ENABLE_TRENDING_CRON=true in .env
+// startTrendingCronJob() and runInitialRefresh() are available from './services/trendingCronJob.js'
 
 // --- Server Startup ---
 app.listen(PORT, () => {

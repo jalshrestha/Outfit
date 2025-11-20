@@ -221,12 +221,13 @@ export function RightPanel({
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card">
-      <div className="flex-shrink-0 border-b border-border p-4">
+    <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] shadow-[var(--frame-shadow)]/2 backdrop-blur-2xl">
+      <div className="flex-shrink-0 border-b border-[var(--panel-divider)] p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="font-serif text-2xl font-bold text-foreground">Virtual Try-On</h2>
-            <p className="mt-1 text-xs text-muted-foreground">See how your outfit looks together</p>
+            <p className="text-[11px] uppercase tracking-[0.4em] text-[var(--shell-foreground)]/50">Virtual Atelier</p>
+            <h2 className="font-serif text-2xl font-semibold text-[var(--shell-foreground)]">Live try-on renderer</h2>
+            <p className="mt-1 text-xs text-[var(--shell-foreground)]/60">Upload your model to re-light fabric, texture, and fit.</p>
           </div>
           <div className="flex-shrink-0">
             <UploadModel onModelImageChange={onModelImageChange} />
@@ -239,7 +240,7 @@ export function RightPanel({
               size="sm"
               onClick={onPrevModel}
               disabled={!onPrevModel}
-              className="h-10 w-10 rounded-full p-0 hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+              className="h-10 w-10 rounded-full border-[var(--panel-border)] bg-[var(--panel-surface)] p-0 text-[var(--shell-foreground)] hover:bg-[var(--panel-hover)]/30"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -250,13 +251,13 @@ export function RightPanel({
                     key={index}
                     className={`h-2 w-2 rounded-full transition-all duration-200 ${
                       index === currentModelIndex 
-                        ? 'bg-primary scale-125' 
-                        : 'bg-muted-foreground/30'
+                        ? 'bg-[var(--shell-foreground)] scale-125' 
+                        : 'bg-[var(--shell-foreground)]/30'
                     }`}
                   />
                 ))}
               </div>
-              <span className="text-xs text-muted-foreground ml-2">
+              <span className="ml-2 text-xs text-[var(--shell-foreground)]/60">
                 {currentModelIndex + 1} / {modelCount}
               </span>
             </div>
@@ -265,7 +266,7 @@ export function RightPanel({
               size="sm"
               onClick={onNextModel}
               disabled={!onNextModel}
-              className="h-10 w-10 rounded-full p-0 hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+              className="h-10 w-10 rounded-full border-[var(--panel-border)] bg-[var(--panel-surface)] p-0 text-[var(--shell-foreground)] hover:bg-[var(--panel-hover)]/30"
             >
               <ArrowRight className="h-5 w-5" />
             </Button>
@@ -273,10 +274,10 @@ export function RightPanel({
         )}
       </div>
 
-      <div className="flex-1 overflow-hidden p-4">
+      <div className="flex-1 overflow-hidden p-5">
         <div 
           ref={imageRef}
-          className="relative h-full overflow-hidden rounded-lg border border-border bg-gradient-to-br from-muted/30 to-muted/50 dark:from-muted/20 dark:to-muted/30 shadow-lg backdrop-blur-sm"
+          className="relative h-full overflow-hidden rounded-[24px] border border-[var(--panel-border)] bg-gradient-to-br from-white/70 via-white/20 to-transparent shadow-[0_20px_60px_rgba(0,0,0,0.15)] backdrop-blur-2xl dark:from-white/5 dark:via-white/20"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -296,11 +297,11 @@ export function RightPanel({
 
           {/* Action buttons - only show when there's a generated image */}
           {generatedImage && (
-            <div className="absolute right-2 top-2 flex gap-2 z-10">
+            <div className="absolute right-3 top-3 z-10 flex gap-2">
               <Button
                 variant="default"
                 size="icon"
-                className="h-10 w-10 shadow-lg"
+                className="h-11 w-11 rounded-full"
                 onClick={handleSaveOutfit}
                 disabled={isSaving}
                 title="Save to history"
@@ -310,7 +311,7 @@ export function RightPanel({
               <Button
                 variant="secondary"
                 size="icon"
-                className="h-10 w-10 shadow-lg"
+                className="h-11 w-11 rounded-full border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] shadow-lg hover:bg-[var(--panel-hover)]/30"
                 onClick={handleDownload}
                 title="Download generated image"
               >
@@ -324,7 +325,7 @@ export function RightPanel({
             <Button
               variant="destructive"
               size="icon"
-              className="absolute right-2 top-2 h-10 w-10 shadow-lg z-10"
+              className="absolute right-3 top-3 z-10 h-11 w-11 rounded-full shadow-lg"
               onClick={onDeleteModel}
               title="Delete model image"
             >
@@ -350,7 +351,7 @@ export function RightPanel({
         </div>
       </div>
 
-      <div className="flex-shrink-0 border-t border-border p-4">
+      <div className="flex-shrink-0 border-t border-[var(--panel-divider)] p-5">
         <GenerateButton
           onGenerate={handleGenerate}
           disabled={!modelImage || (!selectedItems.top && !selectedItems.bottom && !selectedItems.shoes && !selectedItems["full-outfit"])}

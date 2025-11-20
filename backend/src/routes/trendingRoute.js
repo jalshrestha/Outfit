@@ -310,15 +310,50 @@ router.post('/download-image', async (req, res) => {
 
     console.log('📥 Downloading image:', imageUrl);
 
-    // Fetch the image using axios (backend doesn't have CORS restrictions)
-    const axios = (await import('axios')).default;
     const fs = await import('fs');
     const path = await import('path');
     const { fileURLToPath } = await import('url');
-    
+
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
-    
+    const uploadsDir = path.join(__dirname, '../../../frontend/public/uploads');
+
+    // Check if this is a local file path (already scraped/cached)
+    const isLocalPath = imageUrl.startsWith('/uploads/');
+
+    if (isLocalPath) {
+      // Image is already stored locally - just copy it
+      console.log('📁 Image is local, copying file...');
+
+      const sourcePath = path.join(__dirname, '../../../frontend/public', imageUrl);
+
+      if (!fs.existsSync(sourcePath)) {
+        throw new Error(`Local file not found: ${sourcePath}`);
+      }
+
+      // Determine extension from source file
+      const ext = path.extname(sourcePath) || '.jpg';
+      const filename = `trending-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
+      const filepath = path.join(uploadsDir, filename);
+
+      // Copy the file
+      fs.copyFileSync(sourcePath, filepath);
+
+      const url = `/uploads/${filename}`;
+      console.log('✅ Local image copied:', url);
+
+      return res.status(200).json({
+        success: true,
+        url,
+        imageUrl,
+        contentType: `image/${ext.replace('.', '')}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // External URL - download it
+    const axios = (await import('axios')).default;
+
     const response = await axios.get(imageUrl, {
       responseType: 'arraybuffer',
       headers: {
@@ -330,17 +365,15 @@ router.post('/download-image', async (req, res) => {
     // Determine content type and extension
     const contentType = response.headers['content-type'] || 'image/jpeg';
     const ext = contentType.includes('png') ? '.png' : contentType.includes('webp') ? '.webp' : '.jpeg';
-    
-    // Save to uploads directory
-    const uploadsDir = path.join(__dirname, '../../../frontend/public/uploads');
+
     const filename = `trending-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
     const filepath = path.join(uploadsDir, filename);
-    
+
     // Write file
     fs.writeFileSync(filepath, Buffer.from(response.data));
-    
+
     const url = `/uploads/${filename}`;
-    console.log('✅ Image downloaded and saved:', url);
+    console.log('✅ External image downloaded and saved:', url);
 
     res.status(200).json({
       success: true,

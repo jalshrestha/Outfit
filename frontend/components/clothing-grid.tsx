@@ -125,7 +125,7 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
         {/* Single Image Display */}
         <div
           ref={containerRef}
-          className="relative overflow-hidden rounded-lg border border-border bg-gradient-to-br from-gray-50 to-gray-100"
+          className="relative overflow-hidden rounded-[24px] border border-[var(--panel-border)] bg-[var(--panel-surface)] backdrop-blur-xl"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -271,7 +271,7 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
       {/* Horizontal List Display */}
       <div
         ref={containerRef}
-        className="relative overflow-hidden rounded-lg border border-border bg-gradient-to-br from-gray-50 to-gray-100"
+        className="relative overflow-hidden rounded-[24px] border border-[var(--panel-border)] bg-[var(--panel-surface)] backdrop-blur-xl"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}

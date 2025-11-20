@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { downloadImages } from '../utils/imageDownloader.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,8 +11,9 @@ const CACHE_FILE = path.join(__dirname, '../../data/trending.json');
  * Save scraped results to cache file
  * @param {string} source - Source name (pinterest, hollister, hm)
  * @param {Array} data - Array of outfit objects
+ * @param {boolean} downloadLocalImages - Whether to download images locally (default: true)
  */
-export async function saveToCache(source, data) {
+export async function saveToCache(source, data, downloadLocalImages = true) {
   try {
     let cache = {};
 
@@ -22,13 +24,20 @@ export async function saveToCache(source, data) {
       console.log('📝 Creating new cache file');
     }
 
+    // Download images locally if enabled
+    let finalData = data;
+    if (downloadLocalImages && data.length > 0) {
+      console.log(`   └─ 📥 Downloading images locally...`);
+      finalData = await downloadImages(data, source);
+    }
+
     cache[source] = {
-      data,
+      data: finalData,
       lastUpdated: new Date().toISOString()
     };
 
     await fs.writeFile(CACHE_FILE, JSON.stringify(cache, null, 2));
-    console.log(`   └─ ✅ Saved ${data.length} items to cache for ${source}`);
+    console.log(`   └─ ✅ Saved ${finalData.length} items to cache for ${source}`);
   } catch (error) {
     console.error('❌ Error saving to cache:', error.message);
   }

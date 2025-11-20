@@ -21,9 +21,10 @@ dist-ssr
 .env.local
 .env.production
 
-# Uploads
-frontend/public/uploads/
-uploads/
+# Uploads (but allow trending images for GitHub)
+frontend/public/uploads/*
+!frontend/public/uploads/trending/
+backend/uploads/
 
 # Editor directories and files
 .vscode/*

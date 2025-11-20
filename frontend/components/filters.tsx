@@ -18,17 +18,17 @@ const filters: { value: CategoryFilter; label: string }[] = [
 
 export function Filters({ currentFilter, onFilterChange }: FiltersProps) {
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       {filters.map((filter) => (
         <motion.button
           key={filter.value}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
           onClick={() => onFilterChange(filter.value)}
           className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ${
             currentFilter === filter.value
-              ? "bg-primary text-primary-foreground shadow-md"
-              : "bg-accent text-accent-foreground hover:bg-accent/80"
+              ? "bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] shadow-[var(--btn-primary-shadow)]"
+              : "border border-[var(--panel-border)] bg-[var(--panel-hover)]/40 text-[var(--shell-foreground)]/70 hover:text-[var(--shell-foreground)]"
           }`}
         >
           {filter.label}
