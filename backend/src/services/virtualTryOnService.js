@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
- * Generates a virtual try-on image using Gemini 2.5 Flash Image model
+ * Generates a virtual try-on image using Gemini 3 Pro Image Preview model
  * @param {string} modelUrl - Path to the model/person image
  * @param {Object} clothingItems - Object containing clothing item paths
  * @param {string} clothingItems.full_outfit - Path to full outfit image (optional)
@@ -158,9 +158,9 @@ export const generateVirtualTryOn = async (modelUrl, clothingItems) => {
       return `Part ${i + 1}: Unknown`;
     }));
 
-    // Generate content using the SDK
+    // Generate content using the SDK (Gemini 3 Pro Image Preview for high-quality generation)
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-image",
+      model: "gemini-3-pro-image-preview",
       contents: prompt,
     });
 

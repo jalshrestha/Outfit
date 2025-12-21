@@ -142,52 +142,79 @@
   "hm": {
     "data": [
       {
-        "title": "H&M Relaxed Fit Cotton T-shirt",
-        "imageUrl": "https://image.hm.com/assets/hm/12/34/123456789abcdef123456789abcdef12.jpg",
-        "price": "$9.99",
+        "title": "Slim Fit Pima Cotton T-shirt - White/Black/Black/Navy blue/Gray melange/White",
+        "imageUrl": "/uploads/trending/hm_16ce4280f6e0048a081c4e2860bdbcbe.jpg",
+        "price": null,
         "category": "top",
         "source": "H&M",
-        "link": "https://www2.hm.com",
-        "originalImageUrl": "https://image.hm.com/assets/hm/12/34/123456789abcdef123456789abcdef12.jpg"
+        "link": "https://www2.hm.com/en_us/productpage.1101074001.html",
+        "originalImageUrl": "https://image.hm.com/assets/hm/4b/43/4b431a2c490a9c7e1f28ac5aa2705b87ef229a9e.jpg?wid=800&hei=1000&fit=crop"
       },
       {
-        "title": "H&M Slim Fit Chinos",
-        "imageUrl": "https://image.hm.com/assets/hm/ab/cd/abcdef123456789abcdef123456789ab.jpg",
-        "price": "$24.99",
+        "title": "Relaxed Fit Linen-Blend Pants - Light beige/Navy blue/Dark gray",
+        "imageUrl": "/uploads/trending/hm_1f5adeb1d682d9ccd22c30b36ba53e4b.jpg",
+        "price": null,
         "category": "bottom",
         "source": "H&M",
-        "link": "https://www2.hm.com",
-        "originalImageUrl": "https://image.hm.com/assets/hm/ab/cd/abcdef123456789abcdef123456789ab.jpg"
+        "link": "https://www2.hm.com/en_us/productpage.1261478001.html",
+        "originalImageUrl": "https://image.hm.com/assets/hm/94/06/9406a31a09176e6892822a04dec5fe72883d8bc1.jpg?wid=800&hei=1000&fit=crop"
       },
       {
-        "title": "H&M Denim Jacket",
-        "imageUrl": "https://image.hm.com/assets/hm/98/76/987654321fedcba987654321fedcba98.jpg",
-        "price": "$39.99",
+        "title": "Slim Fit Pima Cotton T-shirt - Black/White/Black/Navy blue/Gray melange/White",
+        "imageUrl": "/uploads/trending/hm_0c59211e02a19578ff663e2685ed3711.jpg",
+        "price": null,
         "category": "top",
         "source": "H&M",
-        "link": "https://www2.hm.com",
-        "originalImageUrl": "https://image.hm.com/assets/hm/98/76/987654321fedcba987654321fedcba98.jpg"
+        "link": "https://www2.hm.com/en_us/productpage.1101074043.html",
+        "originalImageUrl": "https://image.hm.com/assets/hm/7d/8c/7d8cf37a8515a16305ca51811376e98b14b319a1.jpg?wid=800&hei=1000&fit=crop"
       },
       {
-        "title": "H&M Oversized Hoodie",
-        "imageUrl": "https://image.hm.com/assets/hm/11/22/112233445566778899aabbccddeeff11.jpg",
-        "price": "$29.99",
+        "title": "Relaxed-Fit Mohair-Blend Cardigan - Black",
+        "imageUrl": "/uploads/trending/hm_07c6191ea259e8eeb3c4688f07a8c88b.jpg",
+        "price": null,
         "category": "top",
         "source": "H&M",
-        "link": "https://www2.hm.com",
-        "originalImageUrl": "https://image.hm.com/assets/hm/11/22/112233445566778899aabbccddeeff11.jpg"
+        "link": "https://www2.hm.com/en_us/productpage.1318857001.html",
+        "originalImageUrl": "https://image.hm.com/assets/hm/6b/69/6b69dcc72092b6e23d180fc3edb6f28abf77c827.jpg?wid=800&hei=1000&fit=crop"
       },
       {
-        "title": "H&M Tapered Fit Joggers",
-        "imageUrl": "https://image.hm.com/assets/hm/33/44/334455667788990011223344556677aa.jpg",
-        "price": "$19.99",
+        "title": "Regular Fit Pima Cotton Polo Shirt - Sage green/Cream",
+        "imageUrl": "/uploads/trending/hm_fad3cca2385e0ef37cc0d8f892e1eda1.jpg",
+        "price": null,
+        "category": "top",
+        "source": "H&M",
+        "link": "https://www2.hm.com/en_us/productpage.1265337002.html",
+        "originalImageUrl": "https://image.hm.com/assets/hm/ae/3d/ae3d7d757bc5358dfa090ddc4412d8d7f9d4fb5f.jpg?wid=800&hei=1000&fit=crop"
+      },
+      {
+        "title": "Layered Pima Cotton Shirt - Dusty pink/Dark gray",
+        "imageUrl": "/uploads/trending/hm_3480fc020531fb0a449a545dc72e978b.jpg",
+        "price": null,
+        "category": "top",
+        "source": "H&M",
+        "link": "https://www2.hm.com/en_us/productpage.1318865002.html",
+        "originalImageUrl": "https://image.hm.com/assets/hm/c4/0a/c40adaf9271e0ea2774641806ae84032c4f9df10.jpg?wid=800&hei=1000&fit=crop"
+      },
+      {
+        "title": "Loose-Fit Tailored Pants - Black",
+        "imageUrl": "/uploads/trending/hm_73236aa047f270b44e794b5789090072.jpg",
+        "price": null,
         "category": "bottom",
         "source": "H&M",
-        "link": "https://www2.hm.com",
-        "originalImageUrl": "https://image.hm.com/assets/hm/33/44/334455667788990011223344556677aa.jpg"
+        "link": "https://www2.hm.com/en_us/productpage.1315980001.html",
+        "originalImageUrl": "https://image.hm.com/assets/hm/2d/ef/2def6a83973dbb8a62b4852bf90795c91c12956b.jpg?wid=800&hei=1000&fit=crop"
+      },
+      {
+        "title": "Slim Fit Suit Pants - Dark gray/Navy blue/Black",
+        "imageUrl": "/uploads/trending/hm_8751c3900a0a0663e51f3579c0867238.jpg",
+        "price": null,
+        "category": "bottom",
+        "source": "H&M",
+        "link": "https://www2.hm.com/en_us/productpage.1239185003.html",
+        "originalImageUrl": "https://image.hm.com/assets/hm/cc/51/cc51810d591845f314f82a3130fd6289b0c0e9b8.jpg?wid=800&hei=1000&fit=crop"
       }
     ],
-    "lastUpdated": "2025-11-06T01:15:18.405Z"
+    "lastUpdated": "2025-12-21T21:05:29.550Z"
   },
   "hollister": {
     "data": [
