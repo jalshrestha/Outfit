@@ -161,13 +161,13 @@ export function MainLayout() {
   }, [])
 
   return (
-    <main id="studio" className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col pb-8">
-      <div className="mb-6 flex flex-col gap-3 text-[var(--shell-foreground)]/80 md:flex-row md:items-end md:justify-between">
+    <main id="studio" className="relative mx-auto flex h-full w-full max-w-6xl flex-1 min-h-0 flex-col overflow-hidden pb-2">
+      <div className="mb-2 flex flex-col gap-2 text-[var(--shell-foreground)]/80 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.4em] text-[var(--shell-foreground)]/50">Couture Engine</p>
-          <h2 className="text-3xl font-semibold text-[var(--shell-foreground)]">Wardrobe Composer & Virtual Try-On</h2>
+          <p className="text-[11px] uppercase tracking-[0.35em] text-[var(--shell-foreground)]/50">Couture Engine</p>
+          <h2 className="text-2xl font-semibold leading-tight text-[var(--shell-foreground)]">Wardrobe Composer & Virtual Try-On</h2>
         </div>
-        <div className="flex items-center gap-6 text-xs uppercase tracking-[0.3em] text-[var(--shell-foreground)]/60">
+        <div className="flex items-center gap-4 text-[11px] uppercase tracking-[0.3em] text-[var(--shell-foreground)]/60">
           <div>
             <p className="text-[11px] text-[var(--shell-foreground)]/50">Model slots</p>
             <p className="text-base text-[var(--shell-foreground)]">{modelImages.length || 0}/10</p>
@@ -178,15 +178,15 @@ export function MainLayout() {
           </div>
         </div>
       </div>
-      <div className="relative flex-1">
+      <div className="relative flex-1 min-h-0">
         <div className="pointer-events-none absolute inset-0 rounded-[32px] border border-[var(--frame-border)] bg-gradient-to-br from-white/20 via-white/5 to-transparent opacity-40 dark:from-white/10 dark:via-white/5" />
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className="relative z-10 flex h-[calc(100vh-220px)] flex-col rounded-[32px] border border-[var(--frame-border)] bg-[var(--frame-surface)] shadow-[var(--frame-shadow)] backdrop-blur-3xl"
+          className="relative z-10 flex h-full flex-col rounded-[32px] border border-[var(--frame-border)] bg-[var(--frame-surface)] shadow-[var(--frame-shadow)] backdrop-blur-3xl"
         >
-          <TabsContent value="wardrobe" className="m-0 flex-1 overflow-hidden px-6 pb-6 pt-6">
-            <div className="grid h-full gap-6 lg:grid-cols-[0.6fr_0.4fr]">
+          <TabsContent value="wardrobe" className="m-0 flex-1 min-h-0 overflow-hidden px-3 pb-2 pt-1">
+            <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[0.56fr_0.44fr]">
               <LeftPanel
                 clothingItems={clothingItems}
                 onAddClothing={handleAddClothing}
@@ -208,11 +208,11 @@ export function MainLayout() {
             </div>
           </TabsContent>
 
-          <TabsContent value="trending" id="section-trending" className="m-0 flex-1 overflow-hidden px-6 pb-6 pt-6">
+          <TabsContent value="trending" id="section-trending" className="m-0 flex-1 min-h-0 overflow-hidden px-4 pb-4 pt-3">
             <TrendingOutfits />
           </TabsContent>
 
-          <TabsContent value="history" id="section-history" className="m-0 flex-1 overflow-hidden px-6 pb-6 pt-6">
+          <TabsContent value="history" id="section-history" className="m-0 flex-1 min-h-0 overflow-hidden px-4 pb-4 pt-3">
             <OutfitHistory key={historyRefreshKey} onRefresh={() => setHistoryRefreshKey(prev => prev + 1)} />
           </TabsContent>
         </Tabs>

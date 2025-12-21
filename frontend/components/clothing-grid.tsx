@@ -78,7 +78,7 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
     }
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Navigation Controls */}
         {items.length > 1 && (
           <div className="flex items-center justify-center gap-4">
@@ -130,7 +130,7 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          <div className="h-96 flex items-center justify-center p-8">
+          <div className="h-[320px] max-h-[calc(100vh-300px)] flex items-center justify-center p-4">
             <motion.div
               key={safeIndex}
               initial={{ opacity: 0, x: 20 }}
@@ -276,7 +276,7 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div className="h-96 flex items-center justify-center p-8">
+        <div className="h-[320px] max-h-[calc(100vh-300px)] flex items-center justify-center p-4">
           <motion.div
             key={safeIndex}
             initial={{ opacity: 0, x: 20 }}

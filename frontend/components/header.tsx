@@ -14,10 +14,10 @@ export function Header() {
   const { theme, setTheme } = useTheme()
 
   return (
-    <header className="sticky top-6 z-40 mx-auto mb-8 w-full max-w-6xl rounded-full border border-[var(--frame-border)] bg-[var(--frame-surface)] px-4 py-3 text-[var(--shell-foreground)] shadow-[var(--frame-shadow)] backdrop-blur-3xl">
+    <header className="relative z-40 mx-auto mb-4 w-full max-w-6xl rounded-full border border-[var(--frame-border)] bg-[var(--frame-surface)] px-4 py-2.5 text-[var(--shell-foreground)] shadow-[var(--frame-shadow)] backdrop-blur-3xl">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-white/80 to-white/50 text-black shadow-lg dark:text-black">
+          <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-white/80 to-white/50 text-black shadow-lg dark:text-black">
             <Sparkles className="h-5 w-5" />
             <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-black text-[10px] font-semibold text-white shadow-inner">
               AI

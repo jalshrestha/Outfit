@@ -221,20 +221,20 @@ export function RightPanel({
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] shadow-[var(--frame-shadow)]/2 backdrop-blur-2xl">
-      <div className="flex-shrink-0 border-b border-[var(--panel-divider)] p-5">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] shadow-[var(--frame-shadow)]/2 backdrop-blur-2xl">
+      <div className="flex-shrink-0 border-b border-[var(--panel-divider)] px-3 py-2">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.4em] text-[var(--shell-foreground)]/50">Virtual Atelier</p>
-            <h2 className="font-serif text-2xl font-semibold text-[var(--shell-foreground)]">Live try-on renderer</h2>
-            <p className="mt-1 text-xs text-[var(--shell-foreground)]/60">Upload your model to re-light fabric, texture, and fit.</p>
+            <p className="text-[11px] uppercase tracking-[0.4em] text-[var(--shell-foreground)]/50">Model</p>
+            <h2 className="font-serif text-lg font-semibold text-[var(--shell-foreground)]">Upload your photo</h2>
+            <p className="mt-1 text-xs text-[var(--shell-foreground)]/60">Use a clear, front-facing photo for best results.</p>
           </div>
           <div className="flex-shrink-0">
             <UploadModel onModelImageChange={onModelImageChange} />
           </div>
         </div>
         {modelCount > 1 && (
-          <div className="mt-3 flex items-center justify-center gap-4">
+          <div className="mt-2 flex items-center justify-center gap-4">
             <Button
               variant="outline"
               size="sm"
@@ -274,24 +274,19 @@ export function RightPanel({
         )}
       </div>
 
-      <div className="flex-1 overflow-hidden p-5">
+      <div className="flex-1 overflow-hidden px-3 pb-1 pt-1 flex">
         <div 
           ref={imageRef}
-          className="relative h-full overflow-hidden rounded-[24px] border border-[var(--panel-border)] bg-gradient-to-br from-white/70 via-white/20 to-transparent shadow-[0_20px_60px_rgba(0,0,0,0.15)] backdrop-blur-2xl dark:from-white/5 dark:via-white/20"
+          className="relative flex-1 h-full max-h-[calc(100vh-260px)] min-h-[360px] overflow-hidden rounded-[24px] border border-[var(--panel-border)] bg-gradient-to-br from-white/70 via-white/20 to-transparent shadow-[0_20px_60px_rgba(0,0,0,0.15)] px-3 py-3 backdrop-blur-2xl dark:from-white/5 dark:via-white/20"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          <div className="absolute inset-0 flex items-center justify-center p-4">
+          <div className="absolute inset-0 flex items-center justify-center">
             <img
               src={generatedImage || modelImage || "/placeholder.svg"}
               alt="Model"
-              className="max-h-full max-w-full object-contain transition-all duration-300 ease-in-out"
-              style={{
-                maxHeight: '100%',
-                maxWidth: '100%',
-                objectFit: 'contain'
-              }}
+              className="h-full w-full object-contain transition-all duration-300 ease-in-out"
             />
           </div>
 
@@ -351,7 +346,7 @@ export function RightPanel({
         </div>
       </div>
 
-      <div className="flex-shrink-0 border-t border-[var(--panel-divider)] p-5">
+      <div className="flex-shrink-0 border-t border-[var(--panel-divider)] px-3 py-2">
         <GenerateButton
           onGenerate={handleGenerate}
           disabled={!modelImage || (!selectedItems.top && !selectedItems.bottom && !selectedItems.shoes && !selectedItems["full-outfit"])}
