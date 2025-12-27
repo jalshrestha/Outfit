@@ -43,10 +43,10 @@ export function OutfitHistory({ onRefresh }: OutfitHistoryProps) {
   const [editingName, setEditingName] = useState("")
   const { toast } = useToast()
 
-  // Load outfits from localStorage
-  const loadOutfits = () => {
-    const saved = getSavedOutfits()
-    setOutfits(saved)
+  // Load outfits from database
+  const loadOutfits = async () => {
+    const saved = await getSavedOutfits()
+    setOutfits(saved as any)
   }
 
   useEffect(() => {
@@ -84,10 +84,10 @@ export function OutfitHistory({ onRefresh }: OutfitHistoryProps) {
     setFilteredOutfits(filtered)
   }, [outfits, searchQuery, sortBy, filterFavorites])
 
-  const handleDelete = (outfitId: string) => {
+  const handleDelete = async (outfitId: string) => {
     try {
-      deleteSavedOutfit(outfitId)
-      loadOutfits()
+      await deleteSavedOutfit(outfitId)
+      await loadOutfits()
       toast({
         title: "Outfit Deleted",
         description: "The outfit has been removed from your history.",
@@ -101,10 +101,10 @@ export function OutfitHistory({ onRefresh }: OutfitHistoryProps) {
     }
   }
 
-  const handleToggleFavorite = (outfitId: string) => {
+  const handleToggleFavorite = async (outfitId: string, currentStatus: boolean) => {
     try {
-      toggleOutfitFavorite(outfitId)
-      loadOutfits()
+      await toggleOutfitFavorite(outfitId, currentStatus)
+      await loadOutfits()
     } catch (error) {
       toast({
         title: "Update Failed",
@@ -146,11 +146,11 @@ export function OutfitHistory({ onRefresh }: OutfitHistoryProps) {
     setEditingName(outfit.name)
   }
 
-  const saveEditedName = (outfitId: string) => {
+  const saveEditedName = async (outfitId: string) => {
     if (editingName.trim()) {
       try {
-        updateOutfitName(outfitId, editingName.trim())
-        loadOutfits()
+        await updateOutfitName(outfitId, editingName.trim())
+        await loadOutfits()
         setEditingNameId(null)
         toast({
           title: "Name Updated",
@@ -251,116 +251,116 @@ export function OutfitHistory({ onRefresh }: OutfitHistoryProps) {
       {/* Outfit Grid/List */}
       <div className="flex-1 overflow-hidden pt-6">
         <ScrollArea className="h-full px-1">
-        {filteredOutfits.length === 0 ? (
-          <div className="flex h-full items-center justify-center py-16">
-            <div className="text-center">
-              <p className="text-muted-foreground">
-                {searchQuery || filterFavorites
-                  ? "No outfits match your filters"
-                  : "No saved outfits yet. Generate and save your first outfit!"}
-              </p>
+          {filteredOutfits.length === 0 ? (
+            <div className="flex h-full items-center justify-center py-16">
+              <div className="text-center">
+                <p className="text-muted-foreground">
+                  {searchQuery || filterFavorites
+                    ? "No outfits match your filters"
+                    : "No saved outfits yet. Generate and save your first outfit!"}
+                </p>
+              </div>
             </div>
-          </div>
-        ) : viewMode === "grid" ? (
-          <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 pb-8">
-            {filteredOutfits.map((outfit) => (
-              <Card
-                key={outfit.id}
-                className="group overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300 border-0 shadow-sm"
-                onClick={() => setSelectedOutfit(outfit)}
-              >
-                <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-muted/30 to-muted/50 rounded-t-xl">
-                  <img
-                    src={outfit.generatedImageUrl}
-                    alt={outfit.name}
-                    className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute top-3 right-3 flex gap-1">
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white backdrop-blur-sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleToggleFavorite(outfit.id)
-                      }}
-                    >
-                      <Heart className={`h-4 w-4 ${outfit.isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-                    </Button>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3">
-                    <div className="flex items-center justify-between">
-                      <div className={`flex items-center gap-1 ${getRatingColor(outfit.metadata.aiRating)}`}>
-                        <Star className="h-3.5 w-3.5 fill-current" />
-                        <span className="text-sm font-bold">{outfit.metadata.aiRating}/10</span>
-                      </div>
-                      <Badge variant="secondary" className="text-xs bg-white/20 text-white border-0">
-                        {outfit.metadata.style}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-medium text-sm truncate mb-1">{outfit.name}</h3>
-                  <p className="text-xs text-muted-foreground">{formatDate(outfit.timestamp)}</p>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-            <div className="space-y-3 pb-8">
-            {filteredOutfits.map((outfit) => (
-              <Card
-                key={outfit.id}
-                className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-0 shadow-sm"
-                onClick={() => setSelectedOutfit(outfit)}
-              >
-                <div className="flex gap-4 p-4">
-                  <div className="relative h-28 w-28 flex-shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-muted/30 to-muted/50">
+          ) : viewMode === "grid" ? (
+            <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 pb-8">
+              {filteredOutfits.map((outfit) => (
+                <Card
+                  key={outfit.id}
+                  className="group overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300 border-0 shadow-sm"
+                  onClick={() => setSelectedOutfit(outfit)}
+                >
+                  <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-muted/30 to-muted/50 rounded-t-xl">
                     <img
                       src={outfit.generatedImageUrl}
                       alt={outfit.name}
-                      className="h-full w-full object-contain"
+                      className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
                     />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate">{outfit.name}</h3>
-                        <p className="text-xs text-muted-foreground mt-1">{formatDate(outfit.timestamp)}</p>
-                      </div>
-                      <div className="flex gap-1 flex-shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleToggleFavorite(outfit.id)
-                          }}
-                        >
-                          <Heart className={`h-4 w-4 ${outfit.isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-                        </Button>
-                      </div>
+                    <div className="absolute top-3 right-3 flex gap-1">
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white backdrop-blur-sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleFavorite(outfit.id, outfit.isFavorite)
+                        }}
+                      >
+                        <Heart className={`h-4 w-4 ${outfit.isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+                      </Button>
                     </div>
-                    <div className="flex gap-2 mt-3 flex-wrap items-center">
-                      <Badge variant="secondary" className="text-xs">
-                        {outfit.metadata.style}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {outfit.metadata.occasion}
-                      </Badge>
-                      <div className={`flex items-center gap-1 text-xs ${getRatingColor(outfit.metadata.aiRating)}`}>
-                        <Star className="h-3 w-3 fill-current" />
-                        <span className="font-bold">{outfit.metadata.aiRating}/10</span>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3">
+                      <div className="flex items-center justify-between">
+                        <div className={`flex items-center gap-1 ${getRatingColor(outfit.metadata.aiRating)}`}>
+                          <Star className="h-3.5 w-3.5 fill-current" />
+                          <span className="text-sm font-bold">{outfit.metadata.aiRating}/10</span>
+                        </div>
+                        <Badge variant="secondary" className="text-xs bg-white/20 text-white border-0">
+                          {outfit.metadata.style}
+                        </Badge>
                       </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
+                  <div className="p-4">
+                    <h3 className="font-medium text-sm truncate mb-1">{outfit.name}</h3>
+                    <p className="text-xs text-muted-foreground">{formatDate(outfit.timestamp)}</p>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3 pb-8">
+              {filteredOutfits.map((outfit) => (
+                <Card
+                  key={outfit.id}
+                  className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-0 shadow-sm"
+                  onClick={() => setSelectedOutfit(outfit)}
+                >
+                  <div className="flex gap-4 p-4">
+                    <div className="relative h-28 w-28 flex-shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-muted/30 to-muted/50">
+                      <img
+                        src={outfit.generatedImageUrl}
+                        alt={outfit.name}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold truncate">{outfit.name}</h3>
+                          <p className="text-xs text-muted-foreground mt-1">{formatDate(outfit.timestamp)}</p>
+                        </div>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleToggleFavorite(outfit.id, outfit.isFavorite)
+                            }}
+                          >
+                            <Heart className={`h-4 w-4 ${outfit.isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-3 flex-wrap items-center">
+                        <Badge variant="secondary" className="text-xs">
+                          {outfit.metadata.style}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {outfit.metadata.occasion}
+                        </Badge>
+                        <div className={`flex items-center gap-1 text-xs ${getRatingColor(outfit.metadata.aiRating)}`}>
+                          <Star className="h-3 w-3 fill-current" />
+                          <span className="font-bold">{outfit.metadata.aiRating}/10</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </ScrollArea>
       </div>
 
@@ -502,7 +502,7 @@ export function OutfitHistory({ onRefresh }: OutfitHistoryProps) {
                   variant="outline"
                   className="flex-1"
                   onClick={() => {
-                    handleToggleFavorite(selectedOutfit.id)
+                    handleToggleFavorite(selectedOutfit.id, selectedOutfit.isFavorite)
                     setSelectedOutfit({ ...selectedOutfit, isFavorite: !selectedOutfit.isFavorite })
                   }}
                 >

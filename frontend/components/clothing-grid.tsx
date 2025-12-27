@@ -87,7 +87,7 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
               size="sm"
               onClick={goToPrev}
               disabled={safeIndex === 0}
-              className="h-8 w-8 rounded-full p-0 hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+              className="h-10 w-10 sm:h-8 sm:w-8 rounded-full p-0 hover:bg-primary hover:text-primary-foreground transition-all duration-200 touch-manipulation"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -97,11 +97,10 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
                 {Array.from({ length: items.length }).map((_, index) => (
                   <div
                     key={index}
-                    className={`h-2 w-2 rounded-full transition-all duration-200 ${
-                      index === safeIndex
-                        ? 'bg-primary scale-125'
-                        : 'bg-muted-foreground/30'
-                    }`}
+                    className={`h-2 w-2 rounded-full transition-all duration-200 ${index === safeIndex
+                      ? 'bg-primary scale-125'
+                      : 'bg-muted-foreground/30'
+                      }`}
                   />
                 ))}
               </div>
@@ -115,7 +114,7 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
               size="sm"
               onClick={goToNext}
               disabled={safeIndex === items.length - 1}
-              className="h-8 w-8 rounded-full p-0 hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+              className="h-10 w-10 sm:h-8 sm:w-8 rounded-full p-0 hover:bg-primary hover:text-primary-foreground transition-all duration-200 touch-manipulation"
             >
               <ArrowRight className="h-4 w-4" />
             </Button>
@@ -130,7 +129,7 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          <div className="h-[320px] max-h-[calc(100vh-300px)] flex items-center justify-center p-4">
+          <div className="h-[260px] sm:h-[320px] max-h-[50vh] sm:max-h-[calc(100vh-300px)] flex items-center justify-center p-3 sm:p-4">
             <motion.div
               key={safeIndex}
               initial={{ opacity: 0, x: 20 }}
@@ -143,8 +142,8 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
                 src={currentItem.imageUrl || currentItem.image || "/placeholder.svg"}
                 alt={currentItem.name}
                 className="max-h-full max-w-full object-contain transition-transform duration-300 hover:scale-105"
-                style={{ 
-                  maxHeight: '100%', 
+                style={{
+                  maxHeight: '100%',
                   maxWidth: '100%',
                   objectFit: 'contain'
                 }}
@@ -154,7 +153,7 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
                 <Button
                   variant="destructive"
                   size="icon"
-                  className="absolute right-2 top-2 h-8 w-8 shadow-lg z-10"
+                  className="absolute right-2 top-2 h-10 w-10 sm:h-8 sm:w-8 shadow-lg z-10 touch-manipulation"
                   onClick={(e) => {
                     e.stopPropagation()
                     onDeleteItem(currentItem)
@@ -243,11 +242,10 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
               {Array.from({ length: items.length }).map((_, index) => (
                 <div
                   key={index}
-                  className={`h-2 w-2 rounded-full transition-all duration-200 ${
-                    index === safeIndex
-                      ? 'bg-primary scale-125'
-                      : 'bg-muted-foreground/30'
-                  }`}
+                  className={`h-2 w-2 rounded-full transition-all duration-200 ${index === safeIndex
+                    ? 'bg-primary scale-125'
+                    : 'bg-muted-foreground/30'
+                    }`}
                 />
               ))}
             </div>
@@ -276,7 +274,7 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div className="h-[320px] max-h-[calc(100vh-300px)] flex items-center justify-center p-4">
+        <div className="h-[260px] sm:h-[320px] max-h-[50vh] sm:max-h-[calc(100vh-300px)] flex items-center justify-center p-3 sm:p-4">
           <motion.div
             key={safeIndex}
             initial={{ opacity: 0, x: 20 }}
@@ -289,8 +287,8 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
               src={currentItem.imageUrl || currentItem.image || "/placeholder.svg"}
               alt={currentItem.name}
               className="max-h-full max-w-full object-contain transition-transform duration-300 hover:scale-105"
-              style={{ 
-                maxHeight: '100%', 
+              style={{
+                maxHeight: '100%',
                 maxWidth: '100%',
                 objectFit: 'contain'
               }}
@@ -300,7 +298,7 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
               <Button
                 variant="destructive"
                 size="icon"
-                className="absolute right-2 top-2 h-8 w-8 shadow-lg z-10"
+                className="absolute right-2 top-2 h-10 w-10 sm:h-8 sm:w-8 shadow-lg z-10 touch-manipulation"
                 onClick={(e) => {
                   e.stopPropagation()
                   onDeleteItem(currentItem)
