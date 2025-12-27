@@ -19,17 +19,19 @@ const filters: { value: CategoryFilter; label: string }[] = [
 export function Filters({ currentFilter, onFilterChange }: FiltersProps) {
   return (
     <div className="flex flex-wrap gap-2">
-      {filters.map((filter) => (
+      {filters.map((filter, index) => (
         <motion.button
           key={filter.value}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05, duration: 0.3 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => onFilterChange(filter.value)}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ${
-            currentFilter === filter.value
-              ? "bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] shadow-[var(--btn-primary-shadow)]"
-              : "border border-[var(--panel-border)] bg-[var(--panel-hover)]/40 text-[var(--shell-foreground)]/70 hover:text-[var(--shell-foreground)]"
-          }`}
+          className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ${currentFilter === filter.value
+              ? "bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] shadow-lg ring-2 ring-[var(--btn-primary-bg)]/20"
+              : "border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)]/70 hover:bg-[var(--panel-hover)]/60 hover:text-[var(--shell-foreground)] hover:border-[var(--shell-foreground)]/20 hover:shadow-md"
+            }`}
         >
           {filter.label}
         </motion.button>

@@ -41,8 +41,8 @@ export function UploadGarment({ onAddClothing }: UploadGarmentProps) {
       <input {...getInputProps()} />
       <Button
         type="button"
-        variant="outline"
-        className="w-full border-2 border-dashed border-[var(--panel-border)] bg-[var(--panel-surface)]/60 py-5 text-[var(--shell-foreground)] hover:border-[var(--shell-foreground)]/40 hover:bg-[var(--panel-hover)]/30"
+        variant="secondary"
+        className="w-full py-5 hover:scale-[1.02] active:scale-[0.98]"
         disabled={isProcessing}
       >
         {isProcessing ? (

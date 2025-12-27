@@ -132,16 +132,16 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
           <div className="h-[260px] sm:h-[320px] max-h-[50vh] sm:max-h-[calc(100vh-300px)] flex items-center justify-center p-3 sm:p-4">
             <motion.div
               key={safeIndex}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, scale: 0.95, x: 30 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.95, x: -30 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
               className="relative w-full h-full flex items-center justify-center"
             >
               <img
                 src={currentItem.imageUrl || currentItem.image || "/placeholder.svg"}
                 alt={currentItem.name}
-                className="max-h-full max-w-full object-contain transition-transform duration-300 hover:scale-105"
+                className="max-h-full max-w-full object-contain transition-all duration-300 hover:scale-[1.03] hover:drop-shadow-lg"
                 style={{
                   maxHeight: '100%',
                   maxWidth: '100%',
@@ -277,16 +277,16 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
         <div className="h-[260px] sm:h-[320px] max-h-[50vh] sm:max-h-[calc(100vh-300px)] flex items-center justify-center p-3 sm:p-4">
           <motion.div
             key={safeIndex}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, scale: 0.95, x: 30 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.95, x: -30 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
             className="relative w-full h-full flex items-center justify-center"
           >
             <img
               src={currentItem.imageUrl || currentItem.image || "/placeholder.svg"}
               alt={currentItem.name}
-              className="max-h-full max-w-full object-contain transition-transform duration-300 hover:scale-105"
+              className="max-h-full max-w-full object-contain transition-all duration-300 hover:scale-[1.03] hover:drop-shadow-lg"
               style={{
                 maxHeight: '100%',
                 maxWidth: '100%',

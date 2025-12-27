@@ -232,19 +232,19 @@ export function MainLayout() {
   return (
     <main id="studio" className="relative mx-auto flex h-full w-full max-w-6xl flex-1 min-h-0 flex-col overflow-y-auto lg:overflow-hidden pb-[76px] lg:pb-2">
       {/* Header Section - Hidden on mobile to save space */}
-      <div className="hidden lg:flex mb-2 flex-col gap-2 text-[var(--shell-foreground)]/80 md:flex-row md:items-end md:justify-between">
+      <div className="hidden lg:flex mb-4 flex-col gap-2 text-[var(--shell-foreground)]/80 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-[11px] uppercase tracking-[0.35em] text-[var(--shell-foreground)]/50">Couture Engine</p>
           <h2 className="text-2xl font-semibold leading-tight text-[var(--shell-foreground)]">Wardrobe Composer & Virtual Try-On</h2>
         </div>
-        <div className="flex items-center gap-4 text-[11px] uppercase tracking-[0.3em] text-[var(--shell-foreground)]/60">
-          <div>
+        <div className="flex items-center gap-6 text-[11px] uppercase tracking-[0.3em] text-[var(--shell-foreground)]/60">
+          <div className="text-center">
             <p className="text-[11px] text-[var(--shell-foreground)]/50">Model slots</p>
-            <p className="text-base text-[var(--shell-foreground)]">{modelImages.length || 0}/10</p>
+            <p className="text-lg font-medium text-[var(--shell-foreground)]">{modelImages.length || 0}/10</p>
           </div>
-          <div>
+          <div className="text-center">
             <p className="text-[11px] text-[var(--shell-foreground)]/50">Looks saved</p>
-            <p className="text-base text-[var(--shell-foreground)]">{savedLooks}</p>
+            <p className="text-lg font-medium text-[var(--shell-foreground)]">{savedLooks}</p>
           </div>
         </div>
       </div>

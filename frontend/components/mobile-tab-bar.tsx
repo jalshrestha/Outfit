@@ -2,6 +2,7 @@
 
 import { Home, TrendingUp, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
 
 interface MobileTabBarProps {
   activeTab: string
@@ -27,31 +28,41 @@ export function MobileTabBar({ activeTab, onTabChange }: MobileTabBarProps) {
             const isActive = activeTab === tab.id
 
             return (
-              <button
+              <motion.button
                 key={tab.id}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
-                  "relative flex flex-col items-center justify-center gap-1 py-2 px-4 transition-all",
-                  "min-h-[60px] touch-manipulation",
+                  "relative flex flex-col items-center justify-center gap-1 py-2.5 px-4 transition-colors duration-200",
+                  "min-h-[64px] touch-manipulation",
                   isActive
                     ? "text-[var(--accent-foreground)]"
-                    : "text-[var(--shell-foreground)]/60 hover:text-[var(--shell-foreground)]"
+                    : "text-[var(--shell-foreground)]/50 hover:text-[var(--shell-foreground)]/70"
                 )}
               >
-                <Icon className={cn(
-                  "transition-all",
-                  isActive ? "h-6 w-6" : "h-5 w-5"
-                )} />
+                <motion.div
+                  animate={{ scale: isActive ? 1.1 : 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <Icon className={cn(
+                    "transition-all duration-200",
+                    isActive ? "h-6 w-6" : "h-5 w-5"
+                  )} />
+                </motion.div>
                 <span className={cn(
-                  "text-[10px] font-medium tracking-wider",
+                  "text-[10px] font-medium tracking-wider transition-all duration-200",
                   isActive && "font-semibold"
                 )}>
                   {tab.label}
                 </span>
                 {isActive && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-[var(--accent-foreground)] rounded-full" />
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-[var(--accent-foreground)] rounded-full"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
                 )}
-              </button>
+              </motion.button>
             )
           })}
         </div>
