@@ -42,7 +42,7 @@ export function IntroExperience({ onEnter }: IntroExperienceProps) {
   const { theme, setTheme } = useTheme()
 
   return (
-    <section className="relative isolate flex h-[calc(100vh-6rem)] max-h-[900px] w-full flex-col justify-between overflow-hidden rounded-[40px] border border-[var(--frame-border)] bg-[var(--frame-surface)] px-6 py-8 text-[var(--shell-foreground)] shadow-[var(--frame-shadow)] backdrop-blur-3xl sm:px-10 lg:px-16">
+    <section className="relative isolate flex h-[calc(100vh-4rem)] sm:h-[calc(100vh-6rem)] max-h-[900px] w-full flex-col justify-between overflow-hidden rounded-[32px] sm:rounded-[40px] border border-[var(--frame-border)] bg-[var(--frame-surface)] px-4 py-6 sm:px-6 sm:py-8 text-[var(--shell-foreground)] shadow-[var(--frame-shadow)] backdrop-blur-3xl lg:px-16">
       {/* Glow layers */}
       <div className="pointer-events-none absolute inset-0 opacity-70">
         <div className="absolute -top-28 right-0 h-80 w-80 rounded-full bg-[#3C82F6]/30 blur-[140px]" />
@@ -57,13 +57,13 @@ export function IntroExperience({ onEnter }: IntroExperienceProps) {
         transition={{ duration: 0.6 }}
       >
         <div className="mb-6 flex w-full items-center justify-between">
-          <p className="text-xs uppercase tracking-[0.4em] text-[var(--shell-foreground)]/60 dark:text-white/60">
+          <p className="text-xs uppercase tracking-[0.25em] sm:tracking-[0.4em] text-[var(--shell-foreground)]/60 dark:text-white/60">
             Outfit Studio
           </p>
           <Button
             variant="ghost"
             size="icon"
-            className="h-11 w-11 border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] hover:bg-[var(--panel-hover)]/30"
+            className="h-10 w-10 sm:h-11 sm:w-11 border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] hover:bg-[var(--panel-hover)]/30 touch-manipulation"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           >
@@ -71,7 +71,7 @@ export function IntroExperience({ onEnter }: IntroExperienceProps) {
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
         </div>
-        <p className="mb-2 text-xs uppercase tracking-[0.4em] text-[var(--shell-foreground)]/50 dark:text-white/60">
+        <p className="mb-2 text-xs uppercase tracking-[0.25em] sm:tracking-[0.4em] text-[var(--shell-foreground)]/50 dark:text-white/60">
           Powered by Style AI
         </p>
         <h1 className="text-4xl font-semibold tracking-tight text-[var(--shell-foreground)] dark:text-white sm:text-5xl md:text-6xl">

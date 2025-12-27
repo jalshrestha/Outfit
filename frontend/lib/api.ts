@@ -132,14 +132,111 @@ export async function rateOutfit(outfitData: {
   return response.json()
 }
 
-// ============= LocalStorage Helper Functions =============
+// ============= Database API Functions =============
 
-const SAVED_OUTFITS_KEY = 'savedOutfits'
+// ---- Clothing Items ----
 
 /**
- * Get all saved outfits from localStorage
+ * Get all clothing items from database
  */
-export function getSavedOutfits(): Array<{
+export async function getClothingItems(): Promise<Array<{
+  id: string
+  name: string
+  imageUrl: string
+  category: 'top' | 'bottom' | 'shoes' | 'full-outfit'
+  color?: string
+  brand?: string
+}>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/clothing`)
+    if (!response.ok) throw new Error('Failed to fetch clothing items')
+    const items = await response.json()
+    // Transform snake_case to camelCase
+    return items.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      imageUrl: item.image_url,
+      category: item.category,
+      color: item.color,
+      brand: item.brand,
+    }))
+  } catch (error) {
+    console.error('Error fetching clothing items:', error)
+    return []
+  }
+}
+
+/**
+ * Add a clothing item to database
+ */
+export async function addClothingItem(item: {
+  id: string
+  name: string
+  imageUrl: string
+  category: string
+  color?: string
+  brand?: string
+}): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/clothing`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(item),
+  })
+  if (!response.ok) throw new Error('Failed to add clothing item')
+}
+
+/**
+ * Delete a clothing item from database
+ */
+export async function deleteClothingItem(id: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/clothing/${id}`, {
+    method: 'DELETE',
+  })
+  if (!response.ok) throw new Error('Failed to delete clothing item')
+}
+
+// ---- Model Images ----
+
+/**
+ * Get all model images from database
+ */
+export async function getModelImages(): Promise<string[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/models`)
+    if (!response.ok) throw new Error('Failed to fetch model images')
+    const models = await response.json()
+    return models.map((m: any) => m.image_url)
+  } catch (error) {
+    console.error('Error fetching model images:', error)
+    return []
+  }
+}
+
+/**
+ * Add a model image to database
+ */
+export async function addModelImage(imageUrl: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/models`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageUrl }),
+  })
+  if (!response.ok) throw new Error('Failed to add model image')
+}
+
+/**
+ * Delete a model image from database
+ */
+export async function deleteModelImage(id: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/models/${id}`, {
+    method: 'DELETE',
+  })
+  if (!response.ok) throw new Error('Failed to delete model image')
+}
+
+// ---- Saved Outfits ----
+
+export interface SavedOutfitData {
   id: string
   name: string
   timestamp: number
@@ -149,6 +246,7 @@ export function getSavedOutfits(): Array<{
     top?: any
     bottom?: any
     shoes?: any
+    fullOutfit?: any
   }
   metadata: {
     aiRating: number
@@ -157,12 +255,16 @@ export function getSavedOutfits(): Array<{
     tags: string[]
   }
   isFavorite: boolean
-}> {
-  if (typeof window === 'undefined') return []
+}
 
+/**
+ * Get all saved outfits from database
+ */
+export async function getSavedOutfits(): Promise<SavedOutfitData[]> {
   try {
-    const saved = localStorage.getItem(SAVED_OUTFITS_KEY)
-    return saved ? JSON.parse(saved) : []
+    const response = await fetch(`${API_BASE_URL}/api/outfits`)
+    if (!response.ok) throw new Error('Failed to fetch saved outfits')
+    return response.json()
   } catch (error) {
     console.error('Error loading saved outfits:', error)
     return []
@@ -170,91 +272,134 @@ export function getSavedOutfits(): Array<{
 }
 
 /**
- * Save a new outfit to localStorage
+ * Save a new outfit to database
  */
-export function saveOutfit(outfit: {
-  id: string
-  name: string
-  timestamp: number
-  generatedImageUrl: string
-  modelImageUrl: string
-  clothingItems: {
-    top?: any
-    bottom?: any
-    shoes?: any
-  }
-  metadata: {
-    aiRating: number
-    style: string
-    occasion: string
-    tags: string[]
-  }
-  isFavorite: boolean
-}): void {
-  if (typeof window === 'undefined') return
-
-  try {
-    const outfits = getSavedOutfits()
-    outfits.unshift(outfit) // Add to beginning of array
-    localStorage.setItem(SAVED_OUTFITS_KEY, JSON.stringify(outfits))
-  } catch (error) {
-    console.error('Error saving outfit:', error)
-    throw error
-  }
+export async function saveOutfit(outfit: SavedOutfitData): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/outfits`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(outfit),
+  })
+  if (!response.ok) throw new Error('Failed to save outfit')
 }
 
 /**
- * Delete a saved outfit from localStorage
+ * Delete a saved outfit from database
  */
-export function deleteSavedOutfit(outfitId: string): void {
-  if (typeof window === 'undefined') return
-
-  try {
-    const outfits = getSavedOutfits()
-    const filtered = outfits.filter(outfit => outfit.id !== outfitId)
-    localStorage.setItem(SAVED_OUTFITS_KEY, JSON.stringify(filtered))
-  } catch (error) {
-    console.error('Error deleting outfit:', error)
-    throw error
-  }
+export async function deleteSavedOutfit(outfitId: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/outfits/${outfitId}`, {
+    method: 'DELETE',
+  })
+  if (!response.ok) throw new Error('Failed to delete outfit')
 }
 
 /**
  * Toggle favorite status of a saved outfit
  */
-export function toggleOutfitFavorite(outfitId: string): void {
-  if (typeof window === 'undefined') return
-
-  try {
-    const outfits = getSavedOutfits()
-    const updated = outfits.map(outfit =>
-      outfit.id === outfitId
-        ? { ...outfit, isFavorite: !outfit.isFavorite }
-        : outfit
-    )
-    localStorage.setItem(SAVED_OUTFITS_KEY, JSON.stringify(updated))
-  } catch (error) {
-    console.error('Error toggling favorite:', error)
-    throw error
-  }
+export async function toggleOutfitFavorite(outfitId: string, currentStatus: boolean): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/outfits/${outfitId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ isFavorite: !currentStatus }),
+  })
+  if (!response.ok) throw new Error('Failed to toggle favorite')
 }
 
 /**
  * Update outfit name
  */
-export function updateOutfitName(outfitId: string, newName: string): void {
-  if (typeof window === 'undefined') return
+export async function updateOutfitName(outfitId: string, newName: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/outfits/${outfitId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: newName }),
+  })
+  if (!response.ok) throw new Error('Failed to update outfit name')
+}
 
+// ---- User Preferences ----
+
+/**
+ * Get a preference value from database
+ */
+export async function getPreference(key: string): Promise<string | null> {
   try {
-    const outfits = getSavedOutfits()
-    const updated = outfits.map(outfit =>
-      outfit.id === outfitId
-        ? { ...outfit, name: newName }
-        : outfit
-    )
-    localStorage.setItem(SAVED_OUTFITS_KEY, JSON.stringify(updated))
+    const response = await fetch(`${API_BASE_URL}/api/preferences/${key}`)
+    if (!response.ok) return null
+    const data = await response.json()
+    return data.value
   } catch (error) {
-    console.error('Error updating outfit name:', error)
-    throw error
+    console.error('Error fetching preference:', error)
+    return null
   }
 }
+
+/**
+ * Set a preference value in database
+ */
+export async function setPreference(key: string, value: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/preferences/${key}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ value }),
+  })
+  if (!response.ok) throw new Error('Failed to set preference')
+}
+
+// ---- Data Migration ----
+
+/**
+ * Migrate localStorage data to database (one-time operation)
+ */
+export async function migrateLocalStorageToDatabase(): Promise<{ success: boolean; imported: any }> {
+  if (typeof window === 'undefined') return { success: false, imported: {} }
+
+  try {
+    // Gather all localStorage data
+    const clothingItems = JSON.parse(localStorage.getItem('clothingItems') || '[]')
+    const modelImages = JSON.parse(localStorage.getItem('modelImages') || '[]')
+    const savedOutfits = JSON.parse(localStorage.getItem('savedOutfits') || '[]')
+    const preferences: Record<string, string> = {}
+
+    if (localStorage.getItem('hasSeenIntro')) {
+      preferences['hasSeenIntro'] = localStorage.getItem('hasSeenIntro') || ''
+    }
+
+    // Send to backend
+    const response = await fetch(`${API_BASE_URL}/api/migrate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clothingItems, modelImages, savedOutfits, preferences }),
+    })
+
+    if (!response.ok) throw new Error('Migration failed')
+
+    const result = await response.json()
+
+    // Clear localStorage after successful migration
+    if (result.success) {
+      localStorage.removeItem('clothingItems')
+      localStorage.removeItem('modelImages')
+      localStorage.removeItem('savedOutfits')
+      console.log('✅ Data migrated to database:', result.imported)
+    }
+
+    return result
+  } catch (error) {
+    console.error('Error migrating data:', error)
+    return { success: false, imported: {} }
+  }
+}
+
+/**
+ * Check database health
+ */
+export async function checkDatabaseHealth(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/health`)
+    return response.ok
+  } catch {
+    return false
+  }
+}
+

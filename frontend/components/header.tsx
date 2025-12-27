@@ -17,15 +17,15 @@ export function Header() {
     <header className="relative z-40 mx-auto mb-4 w-full max-w-6xl rounded-full border border-[var(--frame-border)] bg-[var(--frame-surface)] px-4 py-2.5 text-[var(--shell-foreground)] shadow-[var(--frame-shadow)] backdrop-blur-3xl">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-white/80 to-white/50 text-black shadow-lg dark:text-black">
-            <Sparkles className="h-5 w-5" />
+          <div className="relative flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-white/80 to-white/50 text-black shadow-lg dark:text-black">
+            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
             <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-black text-[10px] font-semibold text-white shadow-inner">
               AI
             </div>
           </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-[var(--shell-foreground)]/60">Outfit Studio</p>
-            <h1 className="text-xl font-semibold tracking-tight text-[var(--shell-foreground)]">Luxury Virtual Try-On</h1>
+          <div className="hidden sm:block">
+            <p className="text-xs uppercase tracking-[0.25em] sm:tracking-[0.4em] text-[var(--shell-foreground)]/60">Outfit Studio</p>
+            <h1 className="text-base sm:text-xl font-semibold tracking-tight text-[var(--shell-foreground)]">Luxury Virtual Try-On</h1>
           </div>
         </div>
 
@@ -59,7 +59,7 @@ export function Header() {
             variant="ghost"
             size="icon"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="h-11 w-11 border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] hover:bg-[var(--panel-hover)]/30"
+            className="h-10 w-10 sm:h-11 sm:w-11 border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] hover:bg-[var(--panel-hover)]/30"
             title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           >
             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />

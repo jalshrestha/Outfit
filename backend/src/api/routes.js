@@ -3,16 +3,44 @@ import { upload } from '../config/multer.js';
 import { getCategoryFromGemini } from '../services/geminiService.js';
 import { generateVirtualTryOn, generateClothingLabel } from '../services/virtualTryOnService.js';
 import { rateOutfitWithAI } from '../services/outfitRatingService.js';
+import { optimizeImage } from '../services/imageService.js';
 import trendingRoute from '../routes/trendingRoute.js';
+import dataRoutes from '../routes/dataRoutes.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = Router();
 
-// 1. File Upload Endpoint
-router.post('/upload', upload.single('image'), (req, res) => {
+// Data routes (clothing, models, outfits, preferences)
+router.use('/', dataRoutes);
+
+// 1. File Upload Endpoint (with image optimization)
+router.post('/upload', upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded.' });
   }
-  res.status(200).json({ url: `/uploads/${req.file.filename}` });
+
+  try {
+    // Optimize the uploaded image
+    const optimized = await optimizeImage(req.file.path, req.file.filename);
+
+    console.log('📤 Upload optimized:', optimized.main);
+
+    res.status(200).json({
+      url: optimized.main,
+      thumbnail: optimized.thumbnail,
+      originalSize: optimized.originalSize,
+      optimizedSize: optimized.optimizedSize,
+      compressionRatio: optimized.compressionRatio,
+    });
+  } catch (error) {
+    console.error('Upload optimization error:', error);
+    // Fallback to original file if optimization fails
+    res.status(200).json({ url: `/uploads/${req.file.filename}` });
+  }
 });
 
 // 2. Clothing Categorization Endpoint
@@ -24,7 +52,7 @@ router.post('/categorize', async (req, res) => {
     }
     console.log('📋 Received categorize request for:', localPath);
     const category = await getCategoryFromGemini(localPath);
-    
+
     // Convert backend category format to frontend format
     const categoryMap = {
       'upper_body': 'top',
@@ -32,7 +60,7 @@ router.post('/categorize', async (req, res) => {
       'full_outfit': 'full-outfit',
       'shoes': 'shoes'
     };
-    
+
     const frontendCategory = categoryMap[category] || category;
     console.log('✅ Category determined:', frontendCategory);
     res.status(200).json({ category: frontendCategory });
