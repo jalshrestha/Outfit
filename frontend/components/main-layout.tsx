@@ -7,8 +7,11 @@ import { OutfitHistory } from "@/components/outfit-history"
 import { TrendingOutfits } from "@/components/trending-outfits"
 import { MobileTabBar } from "@/components/mobile-tab-bar"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
+import { StatsDashboard } from "@/components/stats-dashboard"
+import { RecentOutfitsCarousel } from "@/components/recent-outfits-carousel"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import { getClothingItems, addClothingItem, deleteClothingItem, getModelImages, addModelImage, getSavedOutfits, migrateLocalStorageToDatabase } from "@/lib/api"
+import { getClothingItems, addClothingItem, deleteClothingItem, getModelImages, addModelImage, getSavedOutfits, migrateLocalStorageToDatabase, SavedOutfitData } from "@/lib/api"
 import type { ClothingItem } from "@/types"
 
 export function MainLayout() {
@@ -25,6 +28,7 @@ export function MainLayout() {
   const modelImage = modelImages[currentModelIndex] || ''
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0)
   const [savedLooks, setSavedLooks] = useState(0)
+  const [savedOutfits, setSavedOutfits] = useState<SavedOutfitData[]>([])
   const [activeTab, setActiveTab] = useState("wardrobe")
   const [mobilePanelView, setMobilePanelView] = useState<'wardrobe' | 'model'>('wardrobe')
 
@@ -194,6 +198,7 @@ export function MainLayout() {
       try {
         const outfits = await getSavedOutfits()
         setSavedLooks(outfits.length)
+        setSavedOutfits(outfits)
       } catch {
         // ignore errors
       }
@@ -230,95 +235,97 @@ export function MainLayout() {
   )
 
   return (
-    <main id="studio" className="relative mx-auto flex h-full w-full max-w-6xl flex-1 min-h-0 flex-col overflow-y-auto lg:overflow-hidden pb-[76px] lg:pb-2">
-      {/* Header Section - Hidden on mobile to save space */}
-      <div className="hidden lg:flex mb-4 flex-col gap-2 text-[var(--shell-foreground)]/80 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.35em] text-[var(--shell-foreground)]/50">Couture Engine</p>
-          <h2 className="text-2xl font-semibold leading-tight text-[var(--shell-foreground)]">Wardrobe Composer & Virtual Try-On</h2>
-        </div>
-        <div className="flex items-center gap-6 text-[11px] uppercase tracking-[0.3em] text-[var(--shell-foreground)]/60">
-          <div className="text-center">
-            <p className="text-[11px] text-[var(--shell-foreground)]/50">Model slots</p>
-            <p className="text-lg font-medium text-[var(--shell-foreground)]">{modelImages.length || 0}/10</p>
+    <TooltipProvider>
+      <main id="studio" className="relative mx-auto flex h-full w-full max-w-6xl flex-1 min-h-0 flex-col overflow-y-auto lg:overflow-hidden pb-[76px] lg:pb-2">
+        {/* Header Section - Hidden on mobile to save space */}
+        <div className="hidden lg:flex mb-4 flex-col gap-2 text-[var(--shell-foreground)]/80 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.35em] text-[var(--shell-foreground)]/50">Couture Engine</p>
+            <h2 className="text-2xl font-semibold leading-tight text-[var(--shell-foreground)]">Wardrobe Composer & Virtual Try-On</h2>
           </div>
-          <div className="text-center">
-            <p className="text-[11px] text-[var(--shell-foreground)]/50">Looks saved</p>
-            <p className="text-lg font-medium text-[var(--shell-foreground)]">{savedLooks}</p>
+          <div className="flex items-center gap-6 text-[11px] uppercase tracking-[0.3em] text-[var(--shell-foreground)]/60">
+            <div className="text-center">
+              <p className="text-[11px] text-[var(--shell-foreground)]/50">Model slots</p>
+              <p className="text-lg font-medium text-[var(--shell-foreground)]">{modelImages.length || 0}/10</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[11px] text-[var(--shell-foreground)]/50">Looks saved</p>
+              <p className="text-lg font-medium text-[var(--shell-foreground)]">{savedLooks}</p>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="relative flex-1 min-h-0 lg:min-h-0">
-        <div className="pointer-events-none absolute inset-0 rounded-[32px] border border-[var(--frame-border)] bg-gradient-to-br from-white/20 via-white/5 to-transparent opacity-40 dark:from-white/10 dark:via-white/5" />
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="relative z-10 flex h-full flex-col rounded-[32px] border border-[var(--frame-border)] bg-[var(--frame-surface)] shadow-[var(--frame-shadow)] backdrop-blur-3xl"
-        >
-          <TabsContent value="wardrobe" className="m-0 flex-1 min-h-0 overflow-hidden px-2 sm:px-3 pb-2 pt-1">
-            {/* Mobile: Toggle between panels */}
-            <div className="flex h-full flex-col lg:hidden overflow-y-auto">
-              <MobilePanelToggle />
-              <div className="flex-1 overflow-y-auto">
-                {mobilePanelView === 'wardrobe' ? (
-                  <LeftPanel
-                    clothingItems={clothingItems}
-                    onAddClothing={handleAddClothing}
-                    onSelectItem={handleSelectItem}
-                    onDeleteItem={handleDeleteItem}
-                    selectedItems={selectedItems}
-                  />
-                ) : (
-                  <RightPanel
-                    selectedItems={selectedItems}
-                    modelImage={modelImage}
-                    onModelImageChange={handleModelImageChange}
-                    onNextModel={handleNextModel}
-                    onPrevModel={handlePrevModel}
-                    onDeleteModel={handleDeleteModel}
-                    modelCount={modelImages.length}
-                    currentModelIndex={currentModelIndex}
-                    onOutfitSaved={handleOutfitSaved}
-                  />
-                )}
+        <div className="relative flex-1 min-h-0 lg:min-h-0">
+          <div className="pointer-events-none absolute inset-0 rounded-[32px] border border-[var(--frame-border)] bg-gradient-to-br from-white/20 via-white/5 to-transparent opacity-40 dark:from-white/10 dark:via-white/5" />
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="relative z-10 flex h-full flex-col rounded-[32px] border border-[var(--frame-border)] bg-[var(--frame-surface)] shadow-[var(--frame-shadow)] backdrop-blur-3xl"
+          >
+            <TabsContent value="wardrobe" className="m-0 flex-1 min-h-0 overflow-hidden px-2 sm:px-3 pb-2 pt-1">
+              {/* Mobile: Toggle between panels */}
+              <div className="flex h-full flex-col lg:hidden overflow-y-auto">
+                <MobilePanelToggle />
+                <div className="flex-1 overflow-y-auto">
+                  {mobilePanelView === 'wardrobe' ? (
+                    <LeftPanel
+                      clothingItems={clothingItems}
+                      onAddClothing={handleAddClothing}
+                      onSelectItem={handleSelectItem}
+                      onDeleteItem={handleDeleteItem}
+                      selectedItems={selectedItems}
+                    />
+                  ) : (
+                    <RightPanel
+                      selectedItems={selectedItems}
+                      modelImage={modelImage}
+                      onModelImageChange={handleModelImageChange}
+                      onNextModel={handleNextModel}
+                      onPrevModel={handlePrevModel}
+                      onDeleteModel={handleDeleteModel}
+                      modelCount={modelImages.length}
+                      currentModelIndex={currentModelIndex}
+                      onOutfitSaved={handleOutfitSaved}
+                    />
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Desktop: Two-panel grid */}
-            <div className="hidden lg:grid lg:h-full lg:min-h-0 lg:gap-4 lg:grid-cols-[0.56fr_0.44fr]">
-              <LeftPanel
-                clothingItems={clothingItems}
-                onAddClothing={handleAddClothing}
-                onSelectItem={handleSelectItem}
-                onDeleteItem={handleDeleteItem}
-                selectedItems={selectedItems}
-              />
-              <RightPanel
-                selectedItems={selectedItems}
-                modelImage={modelImage}
-                onModelImageChange={handleModelImageChange}
-                onNextModel={handleNextModel}
-                onPrevModel={handlePrevModel}
-                onDeleteModel={handleDeleteModel}
-                modelCount={modelImages.length}
-                currentModelIndex={currentModelIndex}
-                onOutfitSaved={handleOutfitSaved}
-              />
-            </div>
-          </TabsContent>
+              {/* Desktop: Two-panel grid */}
+              <div className="hidden lg:grid lg:h-full lg:min-h-0 lg:gap-4 lg:grid-cols-[0.56fr_0.44fr]">
+                <LeftPanel
+                  clothingItems={clothingItems}
+                  onAddClothing={handleAddClothing}
+                  onSelectItem={handleSelectItem}
+                  onDeleteItem={handleDeleteItem}
+                  selectedItems={selectedItems}
+                />
+                <RightPanel
+                  selectedItems={selectedItems}
+                  modelImage={modelImage}
+                  onModelImageChange={handleModelImageChange}
+                  onNextModel={handleNextModel}
+                  onPrevModel={handlePrevModel}
+                  onDeleteModel={handleDeleteModel}
+                  modelCount={modelImages.length}
+                  currentModelIndex={currentModelIndex}
+                  onOutfitSaved={handleOutfitSaved}
+                />
+              </div>
+            </TabsContent>
 
-          <TabsContent value="trending" id="section-trending" className="m-0 flex-1 min-h-0 overflow-hidden px-4 pb-4 pt-3">
-            <TrendingOutfits />
-          </TabsContent>
+            <TabsContent value="trending" id="section-trending" className="m-0 flex-1 min-h-0 overflow-hidden px-4 pb-4 pt-3">
+              <TrendingOutfits />
+            </TabsContent>
 
-          <TabsContent value="history" id="section-history" className="m-0 flex-1 min-h-0 overflow-hidden px-4 pb-4 pt-3">
-            <OutfitHistory key={historyRefreshKey} onRefresh={() => setHistoryRefreshKey(prev => prev + 1)} />
-          </TabsContent>
-        </Tabs>
-      </div>
+            <TabsContent value="history" id="section-history" className="m-0 flex-1 min-h-0 overflow-hidden px-4 pb-4 pt-3">
+              <OutfitHistory key={historyRefreshKey} onRefresh={() => setHistoryRefreshKey(prev => prev + 1)} />
+            </TabsContent>
+          </Tabs>
+        </div>
 
-      {/* Mobile Tab Bar */}
-      <MobileTabBar activeTab={activeTab} onTabChange={setActiveTab} />
-    </main>
+        {/* Mobile Tab Bar */}
+        <MobileTabBar activeTab={activeTab} onTabChange={setActiveTab} />
+      </main>
+    </TooltipProvider>
   )
 }

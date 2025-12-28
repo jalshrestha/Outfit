@@ -224,11 +224,11 @@ export default function RegisterPage() {
                                     </Button>
                                 </form>
 
-                                <div className="mt-6 text-center text-sm text-[var(--shell-foreground)]/60">
+                                <div className="mt-6 text-center text-sm text-[var(--shell-foreground)]/70">
                                     Already have an account?{' '}
                                     <Link
                                         href="/login"
-                                        className="text-[var(--accent)] hover:underline font-medium transition-colors"
+                                        className="text-black dark:text-white hover:underline font-semibold transition-colors"
                                     >
                                         Sign in
                                     </Link>

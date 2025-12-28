@@ -5,6 +5,7 @@ import { useTheme } from "next-themes"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
+import { useState, useEffect } from "react"
 
 const navItems = [
   { label: "Studio", value: "wardrobe" },
@@ -15,6 +16,20 @@ const navItems = [
 export function Header() {
   const { theme, setTheme } = useTheme()
   const { user, logout } = useAuth()
+  const [activeTab, setActiveTab] = useState("wardrobe")
+
+  // Listen for tab changes
+  useEffect(() => {
+    const handleNavigation = (event: Event) => {
+      const customEvent = event as CustomEvent<string>
+      if (customEvent.detail) {
+        setActiveTab(customEvent.detail)
+      }
+    }
+
+    window.addEventListener("outfit:navigate", handleNavigation as EventListener)
+    return () => window.removeEventListener("outfit:navigate", handleNavigation as EventListener)
+  }, [])
 
   return (
     <motion.header
@@ -42,24 +57,34 @@ export function Header() {
         </div>
 
         <nav className="hidden items-center gap-8 text-sm text-[var(--shell-foreground)]/70 md:flex">
-          {navItems.map((item, index) => (
-            <motion.button
-              key={item.label}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + index * 0.05, duration: 0.3 }}
-              type="button"
-              className="relative py-1 transition-colors hover:text-[var(--shell-foreground)] group"
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new CustomEvent("outfit:navigate", { detail: item.value }))
-                }
-              }}
-            >
-              {item.label}
-              <span className="absolute bottom-0 left-0 h-0.5 w-0 bg-[var(--shell-foreground)]/60 transition-all duration-300 group-hover:w-full" />
-            </motion.button>
-          ))}
+          {navItems.map((item, index) => {
+            const isActive = activeTab === item.value
+            return (
+              <motion.button
+                key={item.label}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + index * 0.05, duration: 0.3 }}
+                type="button"
+                className={`relative py-1 transition-colors group ${isActive
+                  ? 'text-[var(--shell-foreground)] font-medium'
+                  : 'hover:text-[var(--shell-foreground)]'
+                  }`}
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    setActiveTab(item.value)
+                    window.dispatchEvent(new CustomEvent("outfit:navigate", { detail: item.value }))
+                  }
+                }}
+              >
+                {item.label}
+                <span
+                  className={`absolute bottom-0 left-0 h-0.5 bg-black dark:bg-white transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'
+                    }`}
+                />
+              </motion.button>
+            )
+          })}
         </nav>
 
         <div className="flex items-center gap-3">
