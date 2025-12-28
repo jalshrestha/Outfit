@@ -1,7 +1,8 @@
 "use client"
 
-import { Moon, Sun, Sparkles } from "lucide-react"
+import { Moon, Sun, Sparkles, LogOut } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 
@@ -13,6 +14,7 @@ const navItems = [
 
 export function Header() {
   const { theme, setTheme } = useTheme()
+  const { user, logout } = useAuth()
 
   return (
     <motion.header
@@ -61,13 +63,12 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            className="hidden border-[var(--panel-border)] bg-[var(--panel-surface)] px-4 py-2 text-xs uppercase tracking-[0.3em] text-[var(--shell-foreground)]/80 md:flex hover:scale-[1.02]"
-          >
-            Beta Access
-          </Button>
+          {user && (
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--panel-border)] bg-[var(--panel-surface)]">
+              <div className="h-2 w-2 rounded-full bg-green-500" />
+              <span className="text-xs text-[var(--shell-foreground)]/80">{user.username}</span>
+            </div>
+          )}
 
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
@@ -79,6 +80,18 @@ export function Header() {
             >
               <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            </Button>
+          </motion.div>
+
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={logout}
+              className="h-10 w-10 sm:h-11 sm:w-11 border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] hover:bg-red-500/20 hover:text-red-500"
+              title="Logout"
+            >
+              <LogOut className="h-5 w-5" />
             </Button>
           </motion.div>
         </div>

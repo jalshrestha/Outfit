@@ -1,15 +1,17 @@
 import { Router } from 'express';
 import { query } from '../db/index.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
 
 const router = Router();
 
 // ============= CLOTHING ITEMS =============
 
 // GET all clothing items
-router.get('/clothing', async (req, res) => {
+router.get('/clothing', authMiddleware, async (req, res) => {
     try {
         const result = await query(
-            'SELECT * FROM clothing_items ORDER BY created_at DESC'
+            'SELECT * FROM clothing_items WHERE user_id = $1 ORDER BY created_at DESC',
+            [req.user.id]
         );
         res.json(result.rows);
     } catch (error) {
@@ -19,7 +21,7 @@ router.get('/clothing', async (req, res) => {
 });
 
 // POST new clothing item
-router.post('/clothing', async (req, res) => {
+router.post('/clothing', authMiddleware, async (req, res) => {
     try {
         const { id, name, imageUrl, category, color, brand } = req.body;
 
@@ -28,8 +30,8 @@ router.post('/clothing', async (req, res) => {
         }
 
         const result = await query(
-            `INSERT INTO clothing_items (id, name, image_url, category, color, brand)
-       VALUES ($1, $2, $3, $4, $5, $6)
+            `INSERT INTO clothing_items (id, name, image_url, category, color, brand, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (id) DO UPDATE SET
          name = EXCLUDED.name,
          image_url = EXCLUDED.image_url,
@@ -37,7 +39,7 @@ router.post('/clothing', async (req, res) => {
          color = EXCLUDED.color,
          brand = EXCLUDED.brand
        RETURNING *`,
-            [id, name, imageUrl, category, color || null, brand || null]
+            [id, name, imageUrl, category, color || null, brand || null, req.user.id]
         );
 
         res.status(201).json(result.rows[0]);
@@ -48,10 +50,13 @@ router.post('/clothing', async (req, res) => {
 });
 
 // DELETE clothing item
-router.delete('/clothing/:id', async (req, res) => {
+router.delete('/clothing/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await query('DELETE FROM clothing_items WHERE id = $1 RETURNING *', [id]);
+        const result = await query(
+            'DELETE FROM clothing_items WHERE id = $1 AND user_id = $2 RETURNING *',
+            [id, req.user.id]
+        );
 
         if (result.rowCount === 0) {
             return res.status(404).json({ error: 'Clothing item not found' });
@@ -67,9 +72,12 @@ router.delete('/clothing/:id', async (req, res) => {
 // ============= MODEL IMAGES =============
 
 // GET all model images
-router.get('/models', async (req, res) => {
+router.get('/models', authMiddleware, async (req, res) => {
     try {
-        const result = await query('SELECT * FROM model_images ORDER BY created_at DESC');
+        const result = await query(
+            'SELECT * FROM model_images WHERE user_id = $1 ORDER BY created_at DESC',
+            [req.user.id]
+        );
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching model images:', error);
@@ -78,7 +86,7 @@ router.get('/models', async (req, res) => {
 });
 
 // POST new model image
-router.post('/models', async (req, res) => {
+router.post('/models', authMiddleware, async (req, res) => {
     try {
         const { imageUrl } = req.body;
 
@@ -87,8 +95,8 @@ router.post('/models', async (req, res) => {
         }
 
         const result = await query(
-            'INSERT INTO model_images (image_url) VALUES ($1) RETURNING *',
-            [imageUrl]
+            'INSERT INTO model_images (image_url, user_id) VALUES ($1, $2) RETURNING *',
+            [imageUrl, req.user.id]
         );
 
         res.status(201).json(result.rows[0]);
@@ -99,10 +107,13 @@ router.post('/models', async (req, res) => {
 });
 
 // DELETE model image
-router.delete('/models/:id', async (req, res) => {
+router.delete('/models/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await query('DELETE FROM model_images WHERE id = $1 RETURNING *', [id]);
+        const result = await query(
+            'DELETE FROM model_images WHERE id = $1 AND user_id = $2 RETURNING *',
+            [id, req.user.id]
+        );
 
         if (result.rowCount === 0) {
             return res.status(404).json({ error: 'Model image not found' });
@@ -118,7 +129,7 @@ router.delete('/models/:id', async (req, res) => {
 // ============= SAVED OUTFITS =============
 
 // GET all saved outfits (with clothing item details)
-router.get('/outfits', async (req, res) => {
+router.get('/outfits', authMiddleware, async (req, res) => {
     try {
         const result = await query(`
       SELECT 
@@ -132,8 +143,9 @@ router.get('/outfits', async (req, res) => {
       LEFT JOIN clothing_items b ON o.bottom_item_id = b.id
       LEFT JOIN clothing_items s ON o.shoes_item_id = s.id
       LEFT JOIN clothing_items f ON o.full_outfit_item_id = f.id
+      WHERE o.user_id = $1
       ORDER BY o.created_at DESC
-    `);
+    `, [req.user.id]);
 
         // Transform to match frontend format
         const outfits = result.rows.map(row => ({
@@ -165,7 +177,7 @@ router.get('/outfits', async (req, res) => {
 });
 
 // POST new saved outfit
-router.post('/outfits', async (req, res) => {
+router.post('/outfits', authMiddleware, async (req, res) => {
     try {
         const { id, name, generatedImageUrl, modelImageUrl, clothingItems, metadata, isFavorite } = req.body;
 
@@ -175,8 +187,8 @@ router.post('/outfits', async (req, res) => {
 
         const result = await query(
             `INSERT INTO saved_outfits 
-        (id, name, generated_image_url, model_image_url, top_item_id, bottom_item_id, shoes_item_id, full_outfit_item_id, ai_rating, style, occasion, tags, is_favorite)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        (id, name, generated_image_url, model_image_url, top_item_id, bottom_item_id, shoes_item_id, full_outfit_item_id, ai_rating, style, occasion, tags, is_favorite, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
        RETURNING *`,
             [
                 id,
@@ -191,7 +203,8 @@ router.post('/outfits', async (req, res) => {
                 metadata?.style || null,
                 metadata?.occasion || null,
                 metadata?.tags || [],
-                isFavorite || false
+                isFavorite || false,
+                req.user.id
             ]
         );
 
@@ -203,10 +216,13 @@ router.post('/outfits', async (req, res) => {
 });
 
 // DELETE saved outfit
-router.delete('/outfits/:id', async (req, res) => {
+router.delete('/outfits/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await query('DELETE FROM saved_outfits WHERE id = $1 RETURNING *', [id]);
+        const result = await query(
+            'DELETE FROM saved_outfits WHERE id = $1 AND user_id = $2 RETURNING *',
+            [id, req.user.id]
+        );
 
         if (result.rowCount === 0) {
             return res.status(404).json({ error: 'Outfit not found' });
@@ -220,7 +236,7 @@ router.delete('/outfits/:id', async (req, res) => {
 });
 
 // PATCH update outfit (favorite, name)
-router.patch('/outfits/:id', async (req, res) => {
+router.patch('/outfits/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const { name, isFavorite } = req.body;
@@ -243,8 +259,9 @@ router.patch('/outfits/:id', async (req, res) => {
         }
 
         values.push(id);
+        values.push(req.user.id);
         const result = await query(
-            `UPDATE saved_outfits SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+            `UPDATE saved_outfits SET ${updates.join(', ')} WHERE id = $${paramIndex} AND user_id = $${paramIndex + 1} RETURNING *`,
             values
         );
 
@@ -262,10 +279,13 @@ router.patch('/outfits/:id', async (req, res) => {
 // ============= USER PREFERENCES =============
 
 // GET preference by key
-router.get('/preferences/:key', async (req, res) => {
+router.get('/preferences/:key', authMiddleware, async (req, res) => {
     try {
         const { key } = req.params;
-        const result = await query('SELECT * FROM user_preferences WHERE key = $1', [key]);
+        const result = await query(
+            'SELECT * FROM user_preferences WHERE key = $1 AND user_id = $2',
+            [key, req.user.id]
+        );
 
         if (result.rowCount === 0) {
             return res.json({ key, value: null });
@@ -279,17 +299,17 @@ router.get('/preferences/:key', async (req, res) => {
 });
 
 // PUT set preference
-router.put('/preferences/:key', async (req, res) => {
+router.put('/preferences/:key', authMiddleware, async (req, res) => {
     try {
         const { key } = req.params;
         const { value } = req.body;
 
         const result = await query(
-            `INSERT INTO user_preferences (key, value, updated_at)
-       VALUES ($1, $2, NOW())
-       ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()
+            `INSERT INTO user_preferences (key, value, user_id, updated_at)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (key, user_id) DO UPDATE SET value = $2, updated_at = NOW()
        RETURNING *`,
-            [key, value]
+            [key, value, req.user.id]
         );
 
         res.json({ key, value: result.rows[0].value });
@@ -320,20 +340,43 @@ router.post('/migrate', async (req, res) => {
             }
         }
 
-        // Import model images
+        // Import model images (check for duplicates)
         if (modelImages && Array.isArray(modelImages)) {
             for (const imageUrl of modelImages) {
-                await query(
-                    'INSERT INTO model_images (image_url) VALUES ($1)',
+                const existing = await query(
+                    'SELECT id FROM model_images WHERE image_url = $1',
                     [imageUrl]
                 );
-                imported.modelImages++;
+                if (existing.rowCount === 0) {
+                    await query(
+                        'INSERT INTO model_images (image_url) VALUES ($1)',
+                        [imageUrl]
+                    );
+                    imported.modelImages++;
+                }
             }
         }
 
-        // Import saved outfits
+        // Import saved outfits (validate foreign keys first)
         if (savedOutfits && Array.isArray(savedOutfits)) {
             for (const outfit of savedOutfits) {
+                // Check if referenced clothing items exist, set to null if not
+                const topId = outfit.clothingItems?.top?.id;
+                const bottomId = outfit.clothingItems?.bottom?.id;
+                const shoesId = outfit.clothingItems?.shoes?.id;
+                const fullOutfitId = outfit.clothingItems?.fullOutfit?.id;
+
+                const validateId = async (id) => {
+                    if (!id) return null;
+                    const result = await query('SELECT id FROM clothing_items WHERE id = $1', [id]);
+                    return result.rowCount > 0 ? id : null;
+                };
+
+                const validTopId = await validateId(topId);
+                const validBottomId = await validateId(bottomId);
+                const validShoesId = await validateId(shoesId);
+                const validFullOutfitId = await validateId(fullOutfitId);
+
                 await query(
                     `INSERT INTO saved_outfits 
             (id, name, generated_image_url, model_image_url, top_item_id, bottom_item_id, shoes_item_id, full_outfit_item_id, ai_rating, style, occasion, tags, is_favorite, created_at)
@@ -344,10 +387,10 @@ router.post('/migrate', async (req, res) => {
                         outfit.name,
                         outfit.generatedImageUrl,
                         outfit.modelImageUrl,
-                        outfit.clothingItems?.top?.id || null,
-                        outfit.clothingItems?.bottom?.id || null,
-                        outfit.clothingItems?.shoes?.id || null,
-                        outfit.clothingItems?.fullOutfit?.id || null,
+                        validTopId,
+                        validBottomId,
+                        validShoesId,
+                        validFullOutfitId,
                         outfit.metadata?.aiRating || null,
                         outfit.metadata?.style || null,
                         outfit.metadata?.occasion || null,
