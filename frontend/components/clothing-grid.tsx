@@ -151,15 +151,15 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
 
               {onDeleteItem && (
                 <Button
-                  variant="destructive"
+                  variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-2 h-10 w-10 sm:h-8 sm:w-8 shadow-lg z-10 touch-manipulation"
+                  className="absolute right-2 top-2 h-8 w-8 opacity-0 hover:opacity-100 transition-opacity bg-black/60 hover:bg-black/80 text-white border-0 rounded-full backdrop-blur-sm z-10 touch-manipulation"
                   onClick={(e) => {
                     e.stopPropagation()
                     onDeleteItem(currentItem)
                   }}
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4" />
                 </Button>
               )}
 
@@ -296,15 +296,15 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
 
             {onDeleteItem && (
               <Button
-                variant="destructive"
+                variant="ghost"
                 size="icon"
-                className="absolute right-2 top-2 h-10 w-10 sm:h-8 sm:w-8 shadow-lg z-10 touch-manipulation"
+                className="absolute right-2 top-2 h-8 w-8 opacity-0 hover:opacity-100 transition-opacity bg-black/60 hover:bg-black/80 text-white border-0 rounded-full backdrop-blur-sm z-10 touch-manipulation"
                 onClick={(e) => {
                   e.stopPropagation()
                   onDeleteItem(currentItem)
                 }}
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </Button>
             )}
 

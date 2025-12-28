@@ -322,13 +322,13 @@ export function RightPanel({
           {/* Delete model button - only show when there's a model image and no generated image */}
           {modelImage && !generatedImage && onDeleteModel && (
             <Button
-              variant="destructive"
+              variant="ghost"
               size="icon"
-              className="absolute right-3 top-3 z-10 h-12 w-12 sm:h-11 sm:w-11 rounded-full shadow-lg touch-manipulation"
+              className="absolute right-3 top-3 z-10 h-8 w-8 opacity-0 hover:opacity-100 transition-opacity bg-black/60 hover:bg-black/80 text-white border-0 rounded-full backdrop-blur-sm touch-manipulation"
               onClick={onDeleteModel}
               title="Delete model image"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </Button>
           )}
 
