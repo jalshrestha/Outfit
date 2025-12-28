@@ -1,9 +1,12 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import apiRoutes from './api/routes.js';
+import authRoutes from './routes/authRoutes.js';
+import dataRoutes from './routes/dataRoutes.js';
 
 // --- Basic Setup ---
 const __filename = fileURLToPath(import.meta.url);
@@ -24,10 +27,11 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // --- Middleware ---
-app.use(cors({ 
+app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
-  credentials: true 
+  credentials: true
 }));
+app.use(cookieParser());
 // Increase JSON payload limit to handle base64 image data
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -37,6 +41,8 @@ const uploadsPath = path.join(__dirname, '../../frontend/public/uploads');
 app.use('/uploads', express.static(uploadsPath));
 
 // --- API Routes ---
+app.use('/api/auth', authRoutes);
+app.use('/api', dataRoutes);
 app.use('/api', apiRoutes);
 
 // --- Optional: Trending Outfits Cron Job ---
@@ -47,13 +53,22 @@ app.use('/api', apiRoutes);
 app.listen(PORT, () => {
   console.log(`✅ Backend server running on http://localhost:${PORT}`);
   console.log('📡 API Endpoints:');
-  console.log('   POST /api/upload - Upload clothing images');
-  console.log('   POST /api/categorize - Categorize clothing');
-  console.log('   POST /api/label - Generate clothing labels');
-  console.log('   POST /api/try-on - Virtual try-on');
-  console.log('   POST /api/rate-outfit - Rate outfit');
-  console.log('   GET  /api/trending - Get trending outfits');
-  console.log('   POST /api/trending/refresh - Refresh trending cache');
-  console.log('   POST /api/trending/classify-image - Classify image with AI');
-  console.log('   GET  /api/trending/stats - Get cache statistics');
+  console.log('   🔐 Authentication:');
+  console.log('      POST /api/auth/register - Register new user');
+  console.log('      POST /api/auth/login - Login');
+  console.log('      POST /api/auth/logout - Logout');
+  console.log('      GET  /api/auth/me - Get current user');
+  console.log('   📦 Data:');
+  console.log('      GET  /api/clothing - Get clothing items');
+  console.log('      GET  /api/models - Get model images');
+  console.log('      GET  /api/outfits - Get saved outfits');
+  console.log('   🎨 AI:');
+  console.log('      POST /api/upload - Upload clothing images');
+  console.log('      POST /api/categorize - Categorize clothing');
+  console.log('      POST /api/label - Generate clothing labels');
+  console.log('      POST /api/try-on - Virtual try-on');
+  console.log('      POST /api/rate-outfit - Rate outfit');
+  console.log('   📈 Trending:');
+  console.log('      GET  /api/trending - Get trending outfits');
+  console.log('      POST /api/trending/refresh - Refresh trending cache');
 });

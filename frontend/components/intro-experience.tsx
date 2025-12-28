@@ -54,7 +54,7 @@ export function IntroExperience({ onEnter }: IntroExperienceProps) {
         className="relative z-10 flex flex-shrink-0 flex-col items-center text-center"
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="mb-6 flex w-full items-center justify-between">
           <p className="text-xs uppercase tracking-[0.25em] sm:tracking-[0.4em] text-[var(--shell-foreground)]/60 dark:text-white/60">
@@ -96,9 +96,9 @@ export function IntroExperience({ onEnter }: IntroExperienceProps) {
 
       <motion.div
         className="relative z-10 mt-6 flex-1"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.6 }}
+        initial={{ opacity: 0, y: 30, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ delay: 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/90 p-5 text-[var(--shell-foreground)] shadow-2xl backdrop-blur-2xl dark:bg-black/30 dark:text-white sm:grid-cols-3">
           {stats.map((stat) => (
@@ -114,17 +114,21 @@ export function IntroExperience({ onEnter }: IntroExperienceProps) {
         className="relative z-10 mt-6 flex-shrink-0 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.6 }}
+        transition={{ delay: 0.25, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       >
-        {features.map((feature) => (
-          <div
+        {features.map((feature, index) => (
+          <motion.div
             key={feature.title}
-            className="group rounded-3xl border border-white/10 bg-white/90 p-4 text-[var(--shell-foreground)] shadow-xl transition hover:-translate-y-1 hover:bg-white dark:bg-black/30 dark:text-white"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 + index * 0.08, duration: 0.4 }}
+            whileHover={{ y: -4, scale: 1.02 }}
+            className="group rounded-3xl border border-white/10 bg-white/90 p-5 text-[var(--shell-foreground)] shadow-xl transition-shadow hover:shadow-2xl dark:bg-black/30 dark:text-white cursor-pointer"
           >
             <feature.icon className="h-5 w-5 text-[var(--shell-foreground)]/60 dark:text-white/70" />
             <p className="mt-3 text-base font-medium">{feature.title}</p>
             <p className="mt-1 text-xs text-[var(--shell-foreground)]/70 dark:text-white/70">{feature.description}</p>
-          </div>
+          </motion.div>
         ))}
       </motion.div>
     </section>

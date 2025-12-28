@@ -134,6 +134,14 @@ export async function rateOutfit(outfitData: {
 
 // ============= Database API Functions =============
 
+/**
+ * Get authentication headers for API requests
+ */
+function getAuthHeaders(): HeadersInit {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+  return token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }
+}
+
 // ---- Clothing Items ----
 
 /**
@@ -148,7 +156,10 @@ export async function getClothingItems(): Promise<Array<{
   brand?: string
 }>> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/clothing`)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+    const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
+
+    const response = await fetch(`${API_BASE_URL}/api/clothing`, { headers })
     if (!response.ok) throw new Error('Failed to fetch clothing items')
     const items = await response.json()
     // Transform snake_case to camelCase
@@ -179,7 +190,7 @@ export async function addClothingItem(item: {
 }): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/clothing`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(item),
   })
   if (!response.ok) throw new Error('Failed to add clothing item')
@@ -189,8 +200,11 @@ export async function addClothingItem(item: {
  * Delete a clothing item from database
  */
 export async function deleteClothingItem(id: string): Promise<void> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+  const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
   const response = await fetch(`${API_BASE_URL}/api/clothing/${id}`, {
     method: 'DELETE',
+    headers,
   })
   if (!response.ok) throw new Error('Failed to delete clothing item')
 }
@@ -202,7 +216,9 @@ export async function deleteClothingItem(id: string): Promise<void> {
  */
 export async function getModelImages(): Promise<string[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/models`)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+    const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
+    const response = await fetch(`${API_BASE_URL}/api/models`, { headers })
     if (!response.ok) throw new Error('Failed to fetch model images')
     const models = await response.json()
     return models.map((m: any) => m.image_url)
@@ -218,7 +234,7 @@ export async function getModelImages(): Promise<string[]> {
 export async function addModelImage(imageUrl: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/models`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ imageUrl }),
   })
   if (!response.ok) throw new Error('Failed to add model image')
@@ -228,8 +244,11 @@ export async function addModelImage(imageUrl: string): Promise<void> {
  * Delete a model image from database
  */
 export async function deleteModelImage(id: number): Promise<void> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+  const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
   const response = await fetch(`${API_BASE_URL}/api/models/${id}`, {
     method: 'DELETE',
+    headers,
   })
   if (!response.ok) throw new Error('Failed to delete model image')
 }
@@ -262,7 +281,9 @@ export interface SavedOutfitData {
  */
 export async function getSavedOutfits(): Promise<SavedOutfitData[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/outfits`)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+    const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
+    const response = await fetch(`${API_BASE_URL}/api/outfits`, { headers })
     if (!response.ok) throw new Error('Failed to fetch saved outfits')
     return response.json()
   } catch (error) {
@@ -277,7 +298,7 @@ export async function getSavedOutfits(): Promise<SavedOutfitData[]> {
 export async function saveOutfit(outfit: SavedOutfitData): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/outfits`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(outfit),
   })
   if (!response.ok) throw new Error('Failed to save outfit')
@@ -287,8 +308,11 @@ export async function saveOutfit(outfit: SavedOutfitData): Promise<void> {
  * Delete a saved outfit from database
  */
 export async function deleteSavedOutfit(outfitId: string): Promise<void> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+  const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
   const response = await fetch(`${API_BASE_URL}/api/outfits/${outfitId}`, {
     method: 'DELETE',
+    headers,
   })
   if (!response.ok) throw new Error('Failed to delete outfit')
 }
@@ -299,7 +323,7 @@ export async function deleteSavedOutfit(outfitId: string): Promise<void> {
 export async function toggleOutfitFavorite(outfitId: string, currentStatus: boolean): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/outfits/${outfitId}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ isFavorite: !currentStatus }),
   })
   if (!response.ok) throw new Error('Failed to toggle favorite')
@@ -311,7 +335,7 @@ export async function toggleOutfitFavorite(outfitId: string, currentStatus: bool
 export async function updateOutfitName(outfitId: string, newName: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/outfits/${outfitId}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ name: newName }),
   })
   if (!response.ok) throw new Error('Failed to update outfit name')
@@ -324,7 +348,9 @@ export async function updateOutfitName(outfitId: string, newName: string): Promi
  */
 export async function getPreference(key: string): Promise<string | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/preferences/${key}`)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+    const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
+    const response = await fetch(`${API_BASE_URL}/api/preferences/${key}`, { headers })
     if (!response.ok) return null
     const data = await response.json()
     return data.value
@@ -340,7 +366,7 @@ export async function getPreference(key: string): Promise<string | null> {
 export async function setPreference(key: string, value: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/preferences/${key}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ value }),
   })
   if (!response.ok) throw new Error('Failed to set preference')

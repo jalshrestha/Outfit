@@ -54,7 +54,7 @@ export function UploadModel({ onModelImageChange }: UploadModelProps) {
       <Button
         type="button"
         variant="default"
-        className="w-full"
+        className="w-full hover:scale-[1.02] active:scale-[0.98]"
         disabled={isUploading}
       >
         {isUploading ? (

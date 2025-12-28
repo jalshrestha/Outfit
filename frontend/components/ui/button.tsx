@@ -5,21 +5,25 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-60 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-[3px] focus-visible:ring-[color:var(--ring)] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive shadow-[0_10px_30px_rgba(0,0,0,0.08)]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl text-sm font-medium transition-all duration-200 disabled:pointer-events-none disabled:opacity-60 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-[3px] focus-visible:ring-[color:var(--ring)] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive active:scale-[0.98]",
   {
     variants: {
       variant: {
         default:
-          'border border-transparent bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] shadow-[var(--btn-primary-shadow)] hover:opacity-90',
+          'border border-transparent bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] shadow-[var(--btn-primary-shadow)] hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]',
         destructive:
-          'border border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/70',
+          'border border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:scale-[1.02] focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/70',
         outline:
-          'border border-[color:var(--btn-outline-border)] bg-[var(--btn-outline-bg)] text-[var(--btn-outline-fg)] hover:bg-[color:var(--panel-hover)]/30 hover:text-[var(--shell-foreground)]',
+          'border border-[color:var(--btn-outline-border)] bg-[var(--btn-outline-bg)] text-[var(--btn-outline-fg)] hover:bg-[color:var(--panel-hover)]/30 hover:text-[var(--shell-foreground)] hover:border-[var(--shell-foreground)]/30',
         secondary:
-          'border border-[color:var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] hover:bg-[var(--panel-hover)]/20',
+          'border border-[color:var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] hover:bg-[var(--panel-hover)]/20 hover:scale-[1.02]',
         ghost:
           'text-[var(--shell-foreground)] hover:bg-[var(--panel-hover)]/30 hover:text-[var(--shell-foreground)]',
         link: 'text-primary underline-offset-4 hover:underline',
+        premium:
+          'border border-transparent bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] hover:brightness-110 active:scale-[0.98]',
+        glow:
+          'border border-transparent bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] shadow-[var(--btn-primary-shadow)] hover:shadow-[0_0_30px_rgba(145,167,255,0.4)] hover:scale-[1.02] active:scale-[0.98]',
       },
       size: {
         default: 'h-10 px-5 has-[>svg]:px-4',
