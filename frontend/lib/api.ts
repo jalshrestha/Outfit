@@ -211,17 +211,25 @@ export async function deleteClothingItem(id: string): Promise<void> {
 
 // ---- Model Images ----
 
+export interface ModelImage {
+  id: number
+  imageUrl: string
+}
+
 /**
- * Get all model images from database
+ * Get all model images from database (returns objects with IDs)
  */
-export async function getModelImages(): Promise<string[]> {
+export async function getModelImages(): Promise<ModelImage[]> {
   try {
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
     const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
     const response = await fetch(`${API_BASE_URL}/api/models`, { headers })
     if (!response.ok) throw new Error('Failed to fetch model images')
     const models = await response.json()
-    return models.map((m: any) => m.image_url)
+    return models.map((m: any) => ({
+      id: m.id,
+      imageUrl: m.image_url
+    }))
   } catch (error) {
     console.error('Error fetching model images:', error)
     return []

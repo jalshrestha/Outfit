@@ -11,7 +11,7 @@ import { StatsDashboard } from "@/components/stats-dashboard"
 import { RecentOutfitsCarousel } from "@/components/recent-outfits-carousel"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import { getClothingItems, addClothingItem, deleteClothingItem, getModelImages, addModelImage, getSavedOutfits, migrateLocalStorageToDatabase, SavedOutfitData } from "@/lib/api"
+import { getClothingItems, addClothingItem, deleteClothingItem, getModelImages, addModelImage, deleteModelImage, getSavedOutfits, migrateLocalStorageToDatabase, SavedOutfitData, ModelImage } from "@/lib/api"
 import type { ClothingItem } from "@/types"
 
 export function MainLayout() {
@@ -23,9 +23,9 @@ export function MainLayout() {
     "full-outfit"?: ClothingItem
   }>({})
 
-  const [modelImages, setModelImages] = useState<string[]>([])
+  const [modelImages, setModelImages] = useState<ModelImage[]>([])
   const [currentModelIndex, setCurrentModelIndex] = useState(0)
-  const modelImage = modelImages[currentModelIndex] || ''
+  const modelImage = modelImages[currentModelIndex]?.imageUrl || ''
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0)
   const [savedLooks, setSavedLooks] = useState(0)
   const [savedOutfits, setSavedOutfits] = useState<SavedOutfitData[]>([])
@@ -127,14 +127,13 @@ export function MainLayout() {
   }
 
   const handleModelImageChange = async (newImageUrl: string) => {
-    // Add new model to local state immediately
-    const updated = [...modelImages, newImageUrl]
-    setModelImages(updated)
-    setCurrentModelIndex(updated.length - 1)
-
-    // Save to database
+    // Save to database first to get the ID
     try {
       await addModelImage(newImageUrl)
+      // Reload models to get the new ID
+      const images = await getModelImages()
+      setModelImages(images)
+      setCurrentModelIndex(images.length - 1)
     } catch (error) {
       console.error('Error adding model image:', error)
     }
@@ -148,19 +147,31 @@ export function MainLayout() {
     setCurrentModelIndex((prev) => (prev - 1 + modelImages.length) % modelImages.length)
   }
 
-  const handleDeleteModel = () => {
+  const handleDeleteModel = async () => {
     if (modelImages.length === 0) return
 
-    // Remove the current model from the array
+    const modelToDelete = modelImages[currentModelIndex]
+    if (!modelToDelete) return
+
+    // Remove from local state immediately for responsive UI
     const updated = modelImages.filter((_, index) => index !== currentModelIndex)
     setModelImages(updated)
-    // Note: Model deletion from DB would need the model ID, which we'd need to track
 
     // Adjust current index
     if (updated.length === 0) {
       setCurrentModelIndex(0)
     } else if (currentModelIndex >= updated.length) {
       setCurrentModelIndex(updated.length - 1)
+    }
+
+    // Delete from database
+    try {
+      await deleteModelImage(modelToDelete.id)
+    } catch (error) {
+      console.error('Error deleting model image:', error)
+      // Reload models on error to sync state
+      const images = await getModelImages()
+      setModelImages(images)
     }
   }
 

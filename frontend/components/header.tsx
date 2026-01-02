@@ -1,8 +1,9 @@
 "use client"
 
-import { Moon, Sun, Sparkles, LogOut } from "lucide-react"
+import { Moon, Sun, Sparkles, LogOut, User } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useAuth } from "@/contexts/auth-context"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { useState, useEffect } from "react"
@@ -16,6 +17,7 @@ const navItems = [
 export function Header() {
   const { theme, setTheme } = useTheme()
   const { user, logout } = useAuth()
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("wardrobe")
 
   // Listen for tab changes
@@ -89,10 +91,18 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           {user && (
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--panel-border)] bg-[var(--panel-surface)]">
-              <div className="h-2 w-2 rounded-full bg-green-500" />
-              <span className="text-xs text-[var(--shell-foreground)]/80">{user.username}</span>
-            </div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/profile')}
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 h-auto rounded-full border border-[var(--panel-border)] bg-[var(--panel-surface)] hover:bg-[var(--panel-hover)]/30"
+              >
+                <div className="h-2 w-2 rounded-full bg-green-500" />
+                <span className="text-xs text-[var(--shell-foreground)]/80">{user.username}</span>
+                <User className="h-4 w-4 text-[var(--shell-foreground)]/60" />
+              </Button>
+            </motion.div>
           )}
 
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

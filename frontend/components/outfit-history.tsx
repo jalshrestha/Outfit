@@ -23,7 +23,11 @@ import {
   Tag,
   X,
   Edit2,
-  Check
+  Check,
+  Share2,
+  Copy,
+  Twitter,
+  Facebook
 } from "lucide-react"
 import type { SavedOutfit } from "@/types"
 
@@ -138,6 +142,49 @@ export function OutfitHistory({ onRefresh }: OutfitHistoryProps) {
         description: "Failed to download outfit image.",
         variant: "destructive",
       })
+    }
+  }
+
+  const handleShare = async (outfit: SavedOutfit) => {
+    const shareData = {
+      title: `Check out my outfit: ${outfit.name}`,
+      text: `Created with StyleAI - AI Outfit Generator. Style: ${outfit.metadata.style}, Occasion: ${outfit.metadata.occasion}, Rating: ${outfit.metadata.aiRating}/10`,
+      url: window.location.origin
+    }
+
+    try {
+      // Try native share first (works on mobile and some browsers)
+      if (navigator.share) {
+        await navigator.share(shareData)
+        toast({
+          title: "Shared!",
+          description: "Outfit shared successfully.",
+        })
+      } else {
+        // Fallback: copy to clipboard
+        const shareText = `${shareData.title}\n\n${shareData.text}\n\n${shareData.url}`
+        await navigator.clipboard.writeText(shareText)
+        toast({
+          title: "Copied to Clipboard!",
+          description: "Share link and outfit details copied to clipboard.",
+        })
+      }
+    } catch (error) {
+      // User cancelled or error occurred, try clipboard as fallback
+      try {
+        const shareText = `${shareData.title}\n\n${shareData.text}\n\n${shareData.url}`
+        await navigator.clipboard.writeText(shareText)
+        toast({
+          title: "Copied to Clipboard!",
+          description: "Share link and outfit details copied to clipboard.",
+        })
+      } catch (clipboardError) {
+        toast({
+          title: "Share Failed",
+          description: "Unable to share. Please try again.",
+          variant: "destructive",
+        })
+      }
     }
   }
 
@@ -497,7 +544,7 @@ export function OutfitHistory({ onRefresh }: OutfitHistoryProps) {
               <Separator />
 
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   variant="outline"
                   className="flex-1"
@@ -508,6 +555,14 @@ export function OutfitHistory({ onRefresh }: OutfitHistoryProps) {
                 >
                   <Heart className={`h-4 w-4 mr-2 ${selectedOutfit.isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
                   {selectedOutfit.isFavorite ? 'Unfavorite' : 'Favorite'}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => handleShare(selectedOutfit)}
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
                 </Button>
                 <Button
                   variant="outline"

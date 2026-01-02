@@ -4,7 +4,7 @@ import { UploadGarment } from "@/components/upload-garment"
 import { ClothingGrid } from "@/components/clothing-grid"
 import { Filters } from "@/components/filters"
 import type { ClothingItem, CategoryFilter } from "@/types"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 
 interface LeftPanelProps {
   clothingItems: ClothingItem[]
@@ -23,25 +23,25 @@ export function LeftPanel({ clothingItems, onAddClothing, onSelectItem, onDelete
   const [filter, setFilter] = useState<CategoryFilter>("all")
 
   // Normalize all items to ensure consistent category format
-  const normalizedItems = clothingItems.map(item => ({
+  const normalizedItems = useMemo(() => clothingItems.map(item => ({
     ...item,
     category: ((String(item.category) === "full_outfit" || item.category === "full-outfit") ? "full-outfit" : item.category) as ClothingItem['category']
-  }))
+  })), [clothingItems])
 
-  const filteredItems = filter === "all"
-    ? normalizedItems
-    : normalizedItems.filter((item) => {
-      return item.category === filter
-    })
+  // Filter by category
+  const filteredItems = useMemo(() => {
+    if (filter === "all") return normalizedItems
+    return normalizedItems.filter((item) => item.category === filter)
+  }, [normalizedItems, filter])
 
   return (
     <div className="flex lg:h-full min-h-0 flex-col overflow-visible lg:overflow-hidden rounded-[28px] border border-[var(--panel-border)] bg-[var(--panel-surface)] text-[var(--shell-foreground)] shadow-[var(--frame-shadow)]/2 backdrop-blur-2xl">
-      <div className="flex-shrink-0 border-b border-[var(--panel-divider)] p-3 sm:p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.4em] text-[var(--shell-foreground)]/50">Wardrobe</p>
-            <h2 className="font-serif text-xl sm:text-2xl font-semibold text-[var(--shell-foreground)]">Curate your pieces</h2>
-            <p className="mt-1 text-xs sm:text-sm text-[var(--shell-foreground)]/60 line-clamp-2 sm:line-clamp-none">Upload garments and let AI categorize fabric, cut, and vibe.</p>
+      {/* Compact Header */}
+      <div className="flex-shrink-0 border-b border-[var(--panel-divider)] px-3 py-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--shell-foreground)]/50">Wardrobe</p>
+            <h2 className="font-serif text-lg font-semibold text-[var(--shell-foreground)] truncate">Curate your pieces</h2>
           </div>
           <div className="flex-shrink-0">
             <UploadGarment onAddClothing={onAddClothing} />
@@ -49,11 +49,13 @@ export function LeftPanel({ clothingItems, onAddClothing, onSelectItem, onDelete
         </div>
       </div>
 
-      <div className="flex-shrink-0 border-b border-[var(--panel-divider)] p-2 sm:p-3">
+      {/* Category Filters */}
+      <div className="flex-shrink-0 border-b border-[var(--panel-divider)] px-2 py-1.5">
         <Filters currentFilter={filter} onFilterChange={setFilter} />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4">
+      {/* Clothing Grid - takes remaining space */}
+      <div className="flex-1 overflow-y-auto p-2 sm:p-3">
         <ClothingGrid items={filteredItems} onSelectItem={onSelectItem} onDeleteItem={onDeleteItem} selectedItems={selectedItems} currentFilter={filter} />
       </div>
     </div>
