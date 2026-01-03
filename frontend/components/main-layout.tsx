@@ -126,6 +126,12 @@ export function MainLayout() {
     }
   }
 
+  const handleToggleFavorite = (item: ClothingItem) => {
+    setClothingItems(prev => prev.map((i) =>
+      i.id === item.id ? { ...i, isFavorite: !i.isFavorite } : i
+    ))
+  }
+
   const handleModelImageChange = async (newImageUrl: string) => {
     // Save to database first to get the ID
     try {
@@ -283,6 +289,7 @@ export function MainLayout() {
                       onAddClothing={handleAddClothing}
                       onSelectItem={handleSelectItem}
                       onDeleteItem={handleDeleteItem}
+                      onToggleFavorite={handleToggleFavorite}
                       selectedItems={selectedItems}
                     />
                   ) : (
@@ -308,6 +315,7 @@ export function MainLayout() {
                   onAddClothing={handleAddClothing}
                   onSelectItem={handleSelectItem}
                   onDeleteItem={handleDeleteItem}
+                  onToggleFavorite={handleToggleFavorite}
                   selectedItems={selectedItems}
                 />
                 <RightPanel

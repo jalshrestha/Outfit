@@ -437,3 +437,74 @@ export async function checkDatabaseHealth(): Promise<boolean> {
   }
 }
 
+// ============= PLANNED OUTFITS (CALENDAR) =============
+
+export interface PlannedOutfitData {
+  id?: number
+  date: string
+  outfit_id: string
+}
+
+/**
+ * Get all planned outfits for the calendar
+ */
+export async function getPlannedOutfits(): Promise<PlannedOutfitData[]> {
+  const response = await fetch(`${API_BASE_URL}/api/planned-outfits`, {
+    method: 'GET',
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch planned outfits')
+  }
+
+  return response.json()
+}
+
+/**
+ * Save a planned outfit for a date
+ */
+export async function savePlannedOutfit(date: string, outfitId: string): Promise<PlannedOutfitData> {
+  const response = await fetch(`${API_BASE_URL}/api/planned-outfits`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ date, outfitId }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to save planned outfit')
+  }
+
+  return response.json()
+}
+
+/**
+ * Delete a planned outfit for a date
+ */
+export async function deletePlannedOutfit(date: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/planned-outfits/${date}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to delete planned outfit')
+  }
+}
+
+/**
+ * Toggle favorite on a clothing item
+ */
+export async function toggleClothingFavorite(itemId: string): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/api/clothing/${itemId}/favorite`, {
+    method: 'PATCH',
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to toggle favorite')
+  }
+
+  return response.json()
+}

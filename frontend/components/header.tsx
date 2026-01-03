@@ -1,6 +1,6 @@
 "use client"
 
-import { Moon, Sun, Sparkles, LogOut, User } from "lucide-react"
+import { Moon, Sun, Sparkles, LogOut, User, Calendar } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
@@ -12,6 +12,7 @@ const navItems = [
   { label: "Studio", value: "wardrobe" },
   { label: "Trending", value: "trending" },
   { label: "History", value: "history" },
+  { label: "Calendar", value: "calendar", isRoute: true },
 ]
 
 export function Header() {
@@ -73,9 +74,13 @@ export function Header() {
                   : 'hover:text-[var(--shell-foreground)]'
                   }`}
                 onClick={() => {
-                  if (typeof window !== "undefined") {
-                    setActiveTab(item.value)
-                    window.dispatchEvent(new CustomEvent("outfit:navigate", { detail: item.value }))
+                  if ('isRoute' in item && item.isRoute) {
+                    router.push(`/${item.value}`)
+                  } else {
+                    if (typeof window !== "undefined") {
+                      setActiveTab(item.value)
+                      window.dispatchEvent(new CustomEvent("outfit:navigate", { detail: item.value }))
+                    }
                   }
                 }}
               >

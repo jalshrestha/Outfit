@@ -11,6 +11,7 @@ interface LeftPanelProps {
   onAddClothing: (item: ClothingItem) => void
   onSelectItem: (item: ClothingItem) => void
   onDeleteItem: (item: ClothingItem) => void
+  onToggleFavorite?: (item: ClothingItem) => void
   selectedItems: {
     top?: ClothingItem
     bottom?: ClothingItem
@@ -19,8 +20,8 @@ interface LeftPanelProps {
   }
 }
 
-export function LeftPanel({ clothingItems, onAddClothing, onSelectItem, onDeleteItem, selectedItems }: LeftPanelProps) {
-  const [filter, setFilter] = useState<CategoryFilter>("all")
+export function LeftPanel({ clothingItems, onAddClothing, onSelectItem, onDeleteItem, onToggleFavorite, selectedItems }: LeftPanelProps) {
+  const [filter, setFilter] = useState<CategoryFilter | "favorites">("all")
 
   // Normalize all items to ensure consistent category format
   const normalizedItems = useMemo(() => clothingItems.map(item => ({
@@ -28,9 +29,10 @@ export function LeftPanel({ clothingItems, onAddClothing, onSelectItem, onDelete
     category: ((String(item.category) === "full_outfit" || item.category === "full-outfit") ? "full-outfit" : item.category) as ClothingItem['category']
   })), [clothingItems])
 
-  // Filter by category
+  // Filter by category or favorites
   const filteredItems = useMemo(() => {
     if (filter === "all") return normalizedItems
+    if (filter === "favorites") return normalizedItems.filter((item) => item.isFavorite)
     return normalizedItems.filter((item) => item.category === filter)
   }, [normalizedItems, filter])
 
@@ -56,8 +58,9 @@ export function LeftPanel({ clothingItems, onAddClothing, onSelectItem, onDelete
 
       {/* Clothing Grid - takes remaining space */}
       <div className="flex-1 overflow-y-auto p-2 sm:p-3">
-        <ClothingGrid items={filteredItems} onSelectItem={onSelectItem} onDeleteItem={onDeleteItem} selectedItems={selectedItems} currentFilter={filter} />
+        <ClothingGrid items={filteredItems} onSelectItem={onSelectItem} onDeleteItem={onDeleteItem} onToggleFavorite={onToggleFavorite} selectedItems={selectedItems} currentFilter={filter} />
       </div>
     </div>
   )
 }
+
