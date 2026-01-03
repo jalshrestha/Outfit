@@ -431,4 +431,92 @@ router.get('/health', async (req, res) => {
     }
 });
 
+// ============= PLANNED OUTFITS (CALENDAR) =============
+
+// GET all planned outfits for user
+router.get('/planned-outfits', authMiddleware, async (req, res) => {
+    try {
+        const result = await query(
+            'SELECT * FROM planned_outfits WHERE user_id = $1 ORDER BY date ASC',
+            [req.user.id]
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching planned outfits:', error);
+        res.status(500).json({ error: 'Failed to fetch planned outfits' });
+    }
+});
+
+// POST/UPDATE planned outfit for a date
+router.post('/planned-outfits', authMiddleware, async (req, res) => {
+    try {
+        const { date, outfitId } = req.body;
+
+        if (!date || !outfitId) {
+            return res.status(400).json({ error: 'date and outfitId are required' });
+        }
+
+        const result = await query(
+            `INSERT INTO planned_outfits (user_id, date, outfit_id)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (user_id, date) DO UPDATE SET
+               outfit_id = EXCLUDED.outfit_id,
+               updated_at = CURRENT_TIMESTAMP
+             RETURNING *`,
+            [req.user.id, date, outfitId]
+        );
+
+        res.status(201).json(result.rows[0]);
+    } catch (error) {
+        console.error('Error saving planned outfit:', error);
+        res.status(500).json({ error: 'Failed to save planned outfit' });
+    }
+});
+
+// DELETE planned outfit for a date
+router.delete('/planned-outfits/:date', authMiddleware, async (req, res) => {
+    try {
+        const { date } = req.params;
+        const result = await query(
+            'DELETE FROM planned_outfits WHERE user_id = $1 AND date = $2 RETURNING *',
+            [req.user.id, date]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Planned outfit not found' });
+        }
+
+        res.json({ message: 'Planned outfit removed', item: result.rows[0] });
+    } catch (error) {
+        console.error('Error deleting planned outfit:', error);
+        res.status(500).json({ error: 'Failed to delete planned outfit' });
+    }
+});
+
+// ============= CLOTHING FAVORITES =============
+
+// PATCH toggle favorite on clothing item
+router.patch('/clothing/:id/favorite', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await query(
+            `UPDATE clothing_items 
+             SET is_favorite = NOT COALESCE(is_favorite, false)
+             WHERE id = $1 AND user_id = $2
+             RETURNING *`,
+            [id, req.user.id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Clothing item not found' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error('Error toggling favorite:', error);
+        res.status(500).json({ error: 'Failed to toggle favorite' });
+    }
+});
+
 export default router;
+

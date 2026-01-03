@@ -15,7 +15,7 @@ import {
   Sparkles
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { getImageUrl } from "@/lib/api"
+import { getImageUrl, addClothingItem } from "@/lib/api"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
 
@@ -68,7 +68,7 @@ export function TrendingOutfits() {
       title: "Scraping Fresh Data...",
       description: `Fetching new items from ${source} (this may take 30-90 seconds)`,
     })
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/trending/refresh`, {
         method: "POST",
@@ -151,13 +151,14 @@ export function TrendingOutfits() {
         brand: outfit.source
       }
 
-      // Get existing items from localStorage
-      const existingItems = localStorage.getItem("clothingItems")
-      const items: ClothingItem[] = existingItems ? JSON.parse(existingItems) : []
-
-      // Add new item
-      items.push(newItem)
-      localStorage.setItem("clothingItems", JSON.stringify(items))
+      // Save to database
+      await addClothingItem({
+        id: newItem.id,
+        name: newItem.name,
+        imageUrl: newItem.imageUrl,
+        category: newItem.category,
+        brand: newItem.brand || undefined
+      })
 
       toast({
         title: "Added to Wardrobe!",
@@ -188,10 +189,14 @@ export function TrendingOutfits() {
             brand: outfit.source
           }
 
-          const existingItems = localStorage.getItem("clothingItems")
-          const items: ClothingItem[] = existingItems ? JSON.parse(existingItems) : []
-          items.push(newItem)
-          localStorage.setItem("clothingItems", JSON.stringify(items))
+          // Save to database
+          await addClothingItem({
+            id: newItem.id,
+            name: newItem.name,
+            imageUrl: newItem.imageUrl,
+            category: newItem.category,
+            brand: newItem.brand || undefined
+          })
 
           toast({
             title: "Added to Wardrobe!",
@@ -305,7 +310,7 @@ export function TrendingOutfits() {
                           }
                         }}
                       />
-                      
+
                       {/* Hover overlay with action button */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <div className="absolute bottom-4 right-4">

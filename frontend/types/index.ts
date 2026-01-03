@@ -7,6 +7,7 @@ export interface ClothingItem {
   selected?: boolean
   color?: string
   brand?: string
+  isFavorite?: boolean
 }
 
 export interface Outfit {

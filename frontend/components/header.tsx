@@ -1,20 +1,38 @@
 "use client"
 
-import { Moon, Sun, Sparkles, LogOut } from "lucide-react"
+import { Moon, Sun, Sparkles, LogOut, User, Calendar } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useAuth } from "@/contexts/auth-context"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
+import { useState, useEffect } from "react"
 
 const navItems = [
   { label: "Studio", value: "wardrobe" },
   { label: "Trending", value: "trending" },
   { label: "History", value: "history" },
+  { label: "Calendar", value: "calendar", isRoute: true },
 ]
 
 export function Header() {
   const { theme, setTheme } = useTheme()
   const { user, logout } = useAuth()
+  const router = useRouter()
+  const [activeTab, setActiveTab] = useState("wardrobe")
+
+  // Listen for tab changes
+  useEffect(() => {
+    const handleNavigation = (event: Event) => {
+      const customEvent = event as CustomEvent<string>
+      if (customEvent.detail) {
+        setActiveTab(customEvent.detail)
+      }
+    }
+
+    window.addEventListener("outfit:navigate", handleNavigation as EventListener)
+    return () => window.removeEventListener("outfit:navigate", handleNavigation as EventListener)
+  }, [])
 
   return (
     <motion.header
@@ -42,32 +60,54 @@ export function Header() {
         </div>
 
         <nav className="hidden items-center gap-8 text-sm text-[var(--shell-foreground)]/70 md:flex">
-          {navItems.map((item, index) => (
-            <motion.button
-              key={item.label}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + index * 0.05, duration: 0.3 }}
-              type="button"
-              className="relative py-1 transition-colors hover:text-[var(--shell-foreground)] group"
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new CustomEvent("outfit:navigate", { detail: item.value }))
-                }
-              }}
-            >
-              {item.label}
-              <span className="absolute bottom-0 left-0 h-0.5 w-0 bg-[var(--shell-foreground)]/60 transition-all duration-300 group-hover:w-full" />
-            </motion.button>
-          ))}
+          {navItems.map((item, index) => {
+            const isActive = activeTab === item.value
+            return (
+              <motion.button
+                key={item.label}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + index * 0.05, duration: 0.3 }}
+                type="button"
+                className={`relative py-1 transition-colors group ${isActive
+                  ? 'text-[var(--shell-foreground)] font-medium'
+                  : 'hover:text-[var(--shell-foreground)]'
+                  }`}
+                onClick={() => {
+                  if ('isRoute' in item && item.isRoute) {
+                    router.push(`/${item.value}`)
+                  } else {
+                    if (typeof window !== "undefined") {
+                      setActiveTab(item.value)
+                      window.dispatchEvent(new CustomEvent("outfit:navigate", { detail: item.value }))
+                    }
+                  }
+                }}
+              >
+                {item.label}
+                <span
+                  className={`absolute bottom-0 left-0 h-0.5 bg-black dark:bg-white transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'
+                    }`}
+                />
+              </motion.button>
+            )
+          })}
         </nav>
 
         <div className="flex items-center gap-3">
           {user && (
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--panel-border)] bg-[var(--panel-surface)]">
-              <div className="h-2 w-2 rounded-full bg-green-500" />
-              <span className="text-xs text-[var(--shell-foreground)]/80">{user.username}</span>
-            </div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/profile')}
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 h-auto rounded-full border border-[var(--panel-border)] bg-[var(--panel-surface)] hover:bg-[var(--panel-hover)]/30"
+              >
+                <div className="h-2 w-2 rounded-full bg-green-500" />
+                <span className="text-xs text-[var(--shell-foreground)]/80">{user.username}</span>
+                <User className="h-4 w-4 text-[var(--shell-foreground)]/60" />
+              </Button>
+            </motion.div>
           )}
 
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

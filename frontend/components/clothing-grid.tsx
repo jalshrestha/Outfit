@@ -2,7 +2,7 @@
 
 import type { ClothingItem } from "@/types"
 import { motion } from "framer-motion"
-import { Check, X, ArrowLeft, ArrowRight } from "lucide-react"
+import { Check, X, ArrowLeft, ArrowRight, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState, useRef, useEffect } from "react"
 import { useTouchSwipe } from "@/hooks/use-touch-swipe"
@@ -11,6 +11,7 @@ interface ClothingGridProps {
   items: ClothingItem[]
   onSelectItem: (item: ClothingItem) => void
   onDeleteItem?: (item: ClothingItem) => void
+  onToggleFavorite?: (item: ClothingItem) => void
   selectedItems: {
     top?: ClothingItem
     bottom?: ClothingItem
@@ -20,7 +21,7 @@ interface ClothingGridProps {
   currentFilter?: string
 }
 
-export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems, currentFilter = "all" }: ClothingGridProps) {
+export function ClothingGrid({ items, onSelectItem, onDeleteItem, onToggleFavorite, selectedItems, currentFilter = "all" }: ClothingGridProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -151,15 +152,30 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
 
               {onDeleteItem && (
                 <Button
-                  variant="destructive"
+                  variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-2 h-10 w-10 sm:h-8 sm:w-8 shadow-lg z-10 touch-manipulation"
+                  className="absolute right-2 top-2 h-8 w-8 opacity-0 hover:opacity-100 transition-opacity bg-black/60 hover:bg-black/80 text-white border-0 rounded-full backdrop-blur-sm z-10 touch-manipulation"
                   onClick={(e) => {
                     e.stopPropagation()
                     onDeleteItem(currentItem)
                   }}
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+
+              {/* Favorite toggle */}
+              {onToggleFavorite && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-2 top-2 h-8 w-8 transition-all bg-black/40 hover:bg-black/60 text-white border-0 rounded-full backdrop-blur-sm z-10 touch-manipulation"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleFavorite(currentItem)
+                  }}
+                >
+                  <Heart className={`h-4 w-4 ${currentItem.isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
                 </Button>
               )}
 
@@ -296,15 +312,15 @@ export function ClothingGrid({ items, onSelectItem, onDeleteItem, selectedItems,
 
             {onDeleteItem && (
               <Button
-                variant="destructive"
+                variant="ghost"
                 size="icon"
-                className="absolute right-2 top-2 h-10 w-10 sm:h-8 sm:w-8 shadow-lg z-10 touch-manipulation"
+                className="absolute right-2 top-2 h-8 w-8 opacity-0 hover:opacity-100 transition-opacity bg-black/60 hover:bg-black/80 text-white border-0 rounded-full backdrop-blur-sm z-10 touch-manipulation"
                 onClick={(e) => {
                   e.stopPropagation()
                   onDeleteItem(currentItem)
                 }}
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </Button>
             )}
 

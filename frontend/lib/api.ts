@@ -211,17 +211,25 @@ export async function deleteClothingItem(id: string): Promise<void> {
 
 // ---- Model Images ----
 
+export interface ModelImage {
+  id: number
+  imageUrl: string
+}
+
 /**
- * Get all model images from database
+ * Get all model images from database (returns objects with IDs)
  */
-export async function getModelImages(): Promise<string[]> {
+export async function getModelImages(): Promise<ModelImage[]> {
   try {
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
     const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
     const response = await fetch(`${API_BASE_URL}/api/models`, { headers })
     if (!response.ok) throw new Error('Failed to fetch model images')
     const models = await response.json()
-    return models.map((m: any) => m.image_url)
+    return models.map((m: any) => ({
+      id: m.id,
+      imageUrl: m.image_url
+    }))
   } catch (error) {
     console.error('Error fetching model images:', error)
     return []
@@ -429,3 +437,74 @@ export async function checkDatabaseHealth(): Promise<boolean> {
   }
 }
 
+// ============= PLANNED OUTFITS (CALENDAR) =============
+
+export interface PlannedOutfitData {
+  id?: number
+  date: string
+  outfit_id: string
+}
+
+/**
+ * Get all planned outfits for the calendar
+ */
+export async function getPlannedOutfits(): Promise<PlannedOutfitData[]> {
+  const response = await fetch(`${API_BASE_URL}/api/planned-outfits`, {
+    method: 'GET',
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch planned outfits')
+  }
+
+  return response.json()
+}
+
+/**
+ * Save a planned outfit for a date
+ */
+export async function savePlannedOutfit(date: string, outfitId: string): Promise<PlannedOutfitData> {
+  const response = await fetch(`${API_BASE_URL}/api/planned-outfits`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ date, outfitId }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to save planned outfit')
+  }
+
+  return response.json()
+}
+
+/**
+ * Delete a planned outfit for a date
+ */
+export async function deletePlannedOutfit(date: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/planned-outfits/${date}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to delete planned outfit')
+  }
+}
+
+/**
+ * Toggle favorite on a clothing item
+ */
+export async function toggleClothingFavorite(itemId: string): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/api/clothing/${itemId}/favorite`, {
+    method: 'PATCH',
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to toggle favorite')
+  }
+
+  return response.json()
+}
